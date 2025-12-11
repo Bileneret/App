@@ -1,6 +1,8 @@
 from flask import Flask, g
 from extensions import db  # ЗМІНЕНО: імпорт з extensions
 from helpers import get_current_user
+import auth_routes
+import application_routes
 
 # -----------------------
 # Налаштування застосунку
@@ -42,9 +44,6 @@ def init_db_command():
 # -----------------------
 # Маршрути (Imports)
 # -----------------------
-# ВАЖЛИВО: Імпорти в кінці, щоб уникнути Circular Import
-import auth_routes
-import application_routes
 
 if __name__ == "__main__":
     from models import User, PasswordResetToken, Application
