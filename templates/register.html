@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Реєстрація{% endblock %}
+
+{% block content %}
+<h1>Реєстрація</h1>
+
+<form method="post">
+    <label for="email">E-mail</label>
+    <input type="email" name="email" id="email" required
+           value="{{ email or '' }}">
+
+    <label for="password">Пароль (мін. 8 символів)</label>
+    <input type="password" name="password" id="password" required>
+
+    <label for="confirm_password">Підтвердження пароля</label>
+    <input type="password" name="confirm_password" id="confirm_password" required>
+
+    <button type="submit">Зареєструватися</button>
+</form>
+
+<p>Вже маєте акаунт?
+    <a href="{{ url_for('login') }}">Увійти</a>
+</p>
+{% endblock %}

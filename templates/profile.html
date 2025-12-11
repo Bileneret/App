@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Профіль{% endblock %}
+
+{% block content %}
+<h1>Профіль користувача</h1>
+
+<div>
+    <p><strong>E-mail:</strong> {{ user.email }}</p>
+    <p><strong>Роль:</strong> {{ user.role }}</p>
+    <p><strong>Дата реєстрації:</strong> {{ user.created_at }}</p>
+</div>
+
+<hr>
+
+<h2>Налаштування облікового запису</h2>
+<ul>
+    <li><a href="{{ url_for('change_password') }}">Змінити пароль</a></li>
+    {# тут потім можна додати: зміну e-mail, ПІБ тощо #}
+</ul>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% if mode == "create" %}
+    {% set page_title = "Нова заявка" %}
+{% else %}
+    {% set page_title = "Редагування заявки" %}
+{% endif %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1>{{ page_title }}</h1>
+
+<form method="post">
+    <label for="title">Назва заявки</label>
+    <input type="text" id="title" name="title" required
+           value="{{ title_value or '' }}">
+
+    <label for="short_description">Короткий опис</label>
+    <textarea id="short_description" name="short_description" rows="6" required
+              style="width:100%; padding:8px; border-radius:4px; border:1px solid #d1d5db;">{{ description_value or '' }}</textarea>
+
+    <button type="submit">
+        {% if mode == "create" %}Створити{% else %}Зберегти{% endif %}
+    </button>
+</form>
+
+<p>
+    <a href="{{ url_for('my_applications') }}">Повернутися до списку заявок</a>
+</p>
+{% endblock %}

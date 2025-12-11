@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Мої заявки{% endblock %}
+
+{% block content %}
+<h1>Мої заявки</h1>
+
+<p>
+    <a href="{{ url_for('create_application') }}">Створити нову заявку</a>
+</p>
+
+{% if applications %}
+    <table border="0" cellpadding="6" cellspacing="0" style="width: 100%;">
+        <thead>
+            <tr>
+                <th align="left">ID</th>
+                <th align="left">Назва</th>
+                <th align="left">Статус</th>
+                <th align="left">Створена</th>
+                <th align="left">Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for app in applications %}
+            <tr style="border-top: 1px solid #e5e7eb;">
+                <td>{{ app.id }}</td>
+                <td>{{ app.title }}</td>
+                <td>{{ app.status }}</td>
+                <td>{{ app.created_at }}</td>
+                <td>
+                    <a href="{{ url_for('view_application', application_id=app.id) }}">Переглянути</a>
+
+                    {% if app.status in ("draft", "needs_changes") %}
+                        | <a href="{{ url_for('edit_application', application_id=app.id) }}">Редагувати</a>
+                        | <form action="{{ url_for('submit_application', application_id=app.id) }}"
+                                method="post" style="display:inline;">
+                            <button type="submit" style="background:none;border:none;color:#2563eb;cursor:pointer;padding:0;">
+                                Подати
+                            </button>
+                        </form>
+                    {% elif app.status == "submitted" %}
+                        | <form action="{{ url_for('cancel_application', application_id=app.id) }}"
+                                method="post" style="display:inline;">
+                            <button type="submit" style="background:none;border:none;color:#b91c1c;cursor:pointer;padding:0;">
+                                Скасувати
+                            </button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>У вас ще немає жодної заявки.</p>
+{% endif %}
+{% endblock %}
