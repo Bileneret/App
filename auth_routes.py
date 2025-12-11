@@ -13,7 +13,8 @@ from flask import (
 
 from email_validator import validate_email, EmailNotValidError
 
-from app import app, db
+from app import app
+from extensions import db  # ЗМІНЕНО
 from models import User, PasswordResetToken
 from helpers import login_required, send_password_reset_email
 
@@ -32,7 +33,6 @@ def register():
 
         errors = []
 
-        # Перевірка e-mail
         try:
             valid = validate_email(email)
             email = valid.email
@@ -94,19 +94,11 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
-    """Сторінка профілю поточного користувача."""
     return render_template("profile.html", user=g.user)
 
 
 @app.route("/password/reset/request", methods=["GET", "POST"])
 def request_password_reset():
-    """
-    Запит на відновлення пароля:
-      - користувач вводить e-mail,
-      - якщо користувач існує — генеруємо токен, зберігаємо,
-      - формуємо посилання і "надсилаємо" (print),
-      - завжди показуємо нейтральне повідомлення.
-    """
     if request.method == "POST":
         email = (request.form.get("email") or "").strip()
 
@@ -116,15 +108,13 @@ def request_password_reset():
 
         user = User.query.filter_by(email=email).first()
 
-        # Не розкриваємо, чи є такий користувач
         if not user:
             flash(
-                "Якщо користувач з таким e-mail існує, на нього надіслано посилання для відновлення пароля.",
+                "Якщо користувач з таким e-mail існує, на нього надіслано посилання.",
                 "info",
             )
             return redirect(url_for("login"))
 
-        # Створюємо унікальний токен
         token_value = secrets.token_urlsafe(32)
 
         reset_token = PasswordResetToken(
@@ -138,7 +128,7 @@ def request_password_reset():
         send_password_reset_email(user.email, reset_link)
 
         flash(
-            "Якщо користувач з таким e-mail існує, на нього надіслано посилання для відновлення пароля.",
+            "Якщо користувач з таким e-mail існує, на нього надіслано посилання.",
             "info",
         )
         return redirect(url_for("login"))

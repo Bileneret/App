@@ -1,6 +1,6 @@
-from datetime import datetime
 from flask import Flask, g
-from flask_sqlalchemy import SQLAlchemy
+from extensions import db  # ЗМІНЕНО: імпорт з extensions
+from helpers import get_current_user
 
 # -----------------------
 # Налаштування застосунку
@@ -8,20 +8,15 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-# Секретний ключ для сесій і flash-повідомлень
+# Секретний ключ
 app.config["SECRET_KEY"] = "change-me-in-production"
 
-# SQLite база даних у файлі app.db
+# База даних
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
-
-# Імпортуємо моделі, щоб вони були зареєстровані в SQLAlchemy
-from models import User, PasswordResetToken, Application  # noqa: E402,F401
-
-# Допоміжні функції (get_current_user, тощо)
-from helpers import get_current_user  # noqa: E402
+# Ініціалізація БД з додатком
+db.init_app(app)  # ЗМІНЕНО: прив'язка до додатка тут
 
 # -----------------------
 # Глобальний хук перед запитом
@@ -33,26 +28,26 @@ def load_logged_in_user():
     g.user = get_current_user()
 
 # -----------------------
-# Маршрути
-# -----------------------
-# ВАЖЛИВО: просто імпортуючи ці модулі,
-# ми реєструємо всі @app.route(...) з них.
-import auth_routes  # noqa: E402,F401
-import application_routes  # noqa: E402,F401
-
-# -----------------------
-# Ініціалізація БД
+# Ініціалізація БД (CLI команда)
 # -----------------------
 
 @app.cli.command("init-db")
 def init_db_command():
     """flask init-db — створити таблиці у БД."""
+    from models import User, PasswordResetToken, Application
     with app.app_context():
         db.create_all()
     print("Базу даних ініціалізовано.")
 
+# -----------------------
+# Маршрути (Imports)
+# -----------------------
+# ВАЖЛИВО: Імпорти в кінці, щоб уникнути Circular Import
+import auth_routes
+import application_routes
 
 if __name__ == "__main__":
+    from models import User, PasswordResetToken, Application
     with app.app_context():
         db.create_all()
     app.run(debug=True)

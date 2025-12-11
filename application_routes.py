@@ -7,7 +7,8 @@ from flask import (
     g,
 )
 
-from app import app, db
+from app import app
+from extensions import db  # ЗМІНЕНО
 from models import Application
 from helpers import login_required
 
@@ -15,7 +16,6 @@ from helpers import login_required
 @app.route("/applications")
 @login_required
 def my_applications():
-    """Список заявок поточного користувача."""
     apps = (
         Application.query
         .filter_by(owner_id=g.user.id)
@@ -73,14 +73,15 @@ def create_application():
 @app.route("/applications/<int:application_id>")
 @login_required
 def view_application(application_id):
-    """Детальний перегляд заявки (тільки власник)."""
     app_obj = Application.query.get_or_404(application_id)
 
     if app_obj.owner_id != g.user.id:
         flash("Ви не маєте доступу до цієї заявки.", "danger")
         return redirect(url_for("my_applications"))
 
-    return render_template("application_view.html", application=app_obj)
+    # Важливо: у вас був шаблон application_view.html, але в файлах шаблонів був application_detail.html
+    # Я виправив на application_detail.html згідно з вашими файлами
+    return render_template("application_detail.html", application=app_obj)
 
 
 @app.route("/applications/<int:application_id>/edit", methods=["GET", "POST"])
@@ -136,9 +137,6 @@ def edit_application(application_id):
 @app.route("/applications/<int:application_id>/submit", methods=["POST"])
 @login_required
 def submit_application(application_id):
-    """
-    Подання заявки на розгляд.
-    """
     app_obj = Application.query.get_or_404(application_id)
 
     if app_obj.owner_id != g.user.id:
@@ -163,9 +161,6 @@ def submit_application(application_id):
 @app.route("/applications/<int:application_id>/cancel", methods=["POST"])
 @login_required
 def cancel_application(application_id):
-    """
-    Скасування вже надісланої заявки.
-    """
     app_obj = Application.query.get_or_404(application_id)
 
     if app_obj.owner_id != g.user.id:

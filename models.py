@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
-
-from app import db
-
+from extensions import db  # ЗМІНЕНО: імпорт з extensions
 
 class User(db.Model):
     """Користувач системи."""
@@ -21,7 +19,7 @@ class User(db.Model):
 
 
 class PasswordResetToken(db.Model):
-    """Токен для відновлення пароля (спрощений варіант для навчального проєкту)."""
+    """Токен для відновлення пароля."""
     id = db.Column(db.Integer, primary_key=True)
     token = db.Column(db.String(64), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -32,7 +30,6 @@ class PasswordResetToken(db.Model):
 
     @property
     def is_expired(self) -> bool:
-        # Токен діє 24 години
         return datetime.utcnow() > self.created_at + timedelta(hours=24)
 
 
@@ -41,17 +38,7 @@ class Application(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     short_description = db.Column(db.Text, nullable=False)
-
     status = db.Column(db.String(50), nullable=False, default="draft")
-    # Можливі значення:
-    # draft         – чорнетка
-    # submitted     – подано на розгляд
-    # under_review  – на розгляді (епік 3)
-    # needs_changes – потребує доопрацювання
-    # rejected      – відхилено
-    # approved      – схвалено
-    # cancelled     – скасовано заявником
-
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
