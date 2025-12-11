@@ -1,6 +1,4 @@
 import secrets
-from datetime import datetime
-
 from flask import (
     render_template,
     request,
@@ -10,190 +8,184 @@ from flask import (
     session,
     g,
 )
-
 from email_validator import validate_email, EmailNotValidError
 
-from app import app
-from extensions import db  # ЗМІНЕНО
+# ВИДАЛЕНО: from app import app — це розриває коло
+from extensions import db
 from models import User, PasswordResetToken
 from helpers import login_required, send_password_reset_email
 
+def register_routes(app):
+    """Функція для реєстрації маршрутів авторизації."""
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+    @app.route("/")
+    def index():
+        return render_template("index.html")
 
+    @app.route("/register", methods=["GET", "POST"])
+    def register():
+        if request.method == "POST":
+            email = (request.form.get("email") or "").strip()
+            password = request.form.get("password") or ""
+            confirm_password = request.form.get("confirm_password") or ""
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip()
-        password = request.form.get("password") or ""
-        confirm_password = request.form.get("confirm_password") or ""
+            errors = []
 
-        errors = []
+            try:
+                valid = validate_email(email)
+                email = valid.email
+            except EmailNotValidError as e:
+                errors.append(f"Некоректний e-mail: {str(e)}")
 
-        try:
-            valid = validate_email(email)
-            email = valid.email
-        except EmailNotValidError as e:
-            errors.append(f"Некоректний e-mail: {str(e)}")
+            if len(password) < 8:
+                errors.append("Пароль має містити щонайменше 8 символів.")
+            if password != confirm_password:
+                errors.append("Паролі не співпадають.")
 
-        if len(password) < 8:
-            errors.append("Пароль має містити щонайменше 8 символів.")
-        if password != confirm_password:
-            errors.append("Паролі не співпадають.")
+            existing = User.query.filter_by(email=email).first()
+            if existing:
+                errors.append("Користувач з таким e-mail уже зареєстрований.")
 
-        existing = User.query.filter_by(email=email).first()
-        if existing:
-            errors.append("Користувач з таким e-mail уже зареєстрований.")
+            if errors:
+                for e in errors:
+                    flash(e, "danger")
+                return render_template("register.html", email=email)
 
-        if errors:
-            for e in errors:
-                flash(e, "danger")
-            return render_template("register.html", email=email)
+            user = User(email=email)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
 
-        user = User(email=email)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+            flash("Реєстрація успішна. Тепер увійдіть у систему.", "success")
+            return redirect(url_for("login"))
 
-        flash("Реєстрація успішна. Тепер увійдіть у систему.", "success")
-        return redirect(url_for("login"))
+        return render_template("register.html")
 
-    return render_template("register.html")
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            email = (request.form.get("email") or "").strip()
+            password = request.form.get("password") or ""
 
+            user = User.query.filter_by(email=email).first()
+            if user and user.check_password(password):
+                session.clear()
+                session["user_id"] = user.id
+                flash("Ви успішно увійшли в систему.", "success")
+                next_url = request.args.get("next")
+                return redirect(next_url or url_for("profile"))
+            else:
+                flash("Невірний e-mail або пароль.", "danger")
+                return render_template("login.html", email=email)
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip()
-        password = request.form.get("password") or ""
+        return render_template("login.html")
 
-        user = User.query.filter_by(email=email).first()
-        if user and user.check_password(password):
-            session.clear()
-            session["user_id"] = user.id
-            flash("Ви успішно увійшли в систему.", "success")
-            next_url = request.args.get("next")
-            return redirect(next_url or url_for("profile"))
-        else:
-            flash("Невірний e-mail або пароль.", "danger")
-            return render_template("login.html", email=email)
+    @app.route("/logout")
+    def logout():
+        session.clear()
+        flash("Ви вийшли із системи.", "info")
+        return redirect(url_for("index"))
 
-    return render_template("login.html")
+    @app.route("/profile")
+    @login_required
+    def profile():
+        return render_template("profile.html", user=g.user)
 
+    @app.route("/password/reset/request", methods=["GET", "POST"])
+    def request_password_reset():
+        if request.method == "POST":
+            email = (request.form.get("email") or "").strip()
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("Ви вийшли із системи.", "info")
-    return redirect(url_for("index"))
+            if not email:
+                flash("Введіть e-mail.", "danger")
+                return render_template("request_password_reset.html")
 
+            user = User.query.filter_by(email=email).first()
 
-@app.route("/profile")
-@login_required
-def profile():
-    return render_template("profile.html", user=g.user)
+            if not user:
+                flash(
+                    "Якщо користувач з таким e-mail існує, на нього надіслано посилання.",
+                    "info",
+                )
+                return redirect(url_for("login"))
 
+            token_value = secrets.token_urlsafe(32)
 
-@app.route("/password/reset/request", methods=["GET", "POST"])
-def request_password_reset():
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip()
+            reset_token = PasswordResetToken(
+                token=token_value,
+                user=user,
+            )
+            db.session.add(reset_token)
+            db.session.commit()
 
-        if not email:
-            flash("Введіть e-mail.", "danger")
-            return render_template("request_password_reset.html")
+            reset_link = url_for("reset_password", token=token_value, _external=True)
+            send_password_reset_email(user.email, reset_link)
 
-        user = User.query.filter_by(email=email).first()
-
-        if not user:
             flash(
                 "Якщо користувач з таким e-mail існує, на нього надіслано посилання.",
                 "info",
             )
             return redirect(url_for("login"))
 
-        token_value = secrets.token_urlsafe(32)
+        return render_template("request_password_reset.html")
 
-        reset_token = PasswordResetToken(
-            token=token_value,
-            user=user,
-        )
-        db.session.add(reset_token)
-        db.session.commit()
+    @app.route("/password/reset/<token>", methods=["GET", "POST"])
+    def reset_password(token):
+        reset_token = PasswordResetToken.query.filter_by(token=token).first()
 
-        reset_link = url_for("reset_password", token=token_value, _external=True)
-        send_password_reset_email(user.email, reset_link)
+        if reset_token is None or reset_token.used or reset_token.is_expired:
+            flash("Посилання для відновлення пароля недійсне або прострочене.", "danger")
+            return redirect(url_for("login"))
 
-        flash(
-            "Якщо користувач з таким e-mail існує, на нього надіслано посилання.",
-            "info",
-        )
-        return redirect(url_for("login"))
+        if request.method == "POST":
+            new_password = request.form.get("password") or ""
+            confirm_password = request.form.get("confirm_password") or ""
 
-    return render_template("request_password_reset.html")
+            errors = []
+            if len(new_password) < 8:
+                errors.append("Пароль має містити щонайменше 8 символів.")
+            if new_password != confirm_password:
+                errors.append("Паролі не співпадають.")
 
+            if errors:
+                for e in errors:
+                    flash(e, "danger")
+                return render_template("reset_password.html", token=token)
 
-@app.route("/password/reset/<token>", methods=["GET", "POST"])
-def reset_password(token):
-    reset_token = PasswordResetToken.query.filter_by(token=token).first()
+            user = reset_token.user
+            user.set_password(new_password)
+            reset_token.used = True
+            db.session.commit()
 
-    if reset_token is None or reset_token.used or reset_token.is_expired:
-        flash("Посилання для відновлення пароля недійсне або прострочене.", "danger")
-        return redirect(url_for("login"))
+            flash("Пароль успішно змінено. Тепер увійдіть у систему.", "success")
+            return redirect(url_for("login"))
 
-    if request.method == "POST":
-        new_password = request.form.get("password") or ""
-        confirm_password = request.form.get("confirm_password") or ""
+        return render_template("reset_password.html", token=token)
 
-        errors = []
-        if len(new_password) < 8:
-            errors.append("Пароль має містити щонайменше 8 символів.")
-        if new_password != confirm_password:
-            errors.append("Паролі не співпадають.")
+    @app.route("/profile/password", methods=["GET", "POST"])
+    @login_required
+    def change_password():
+        if request.method == "POST":
+            old_password = request.form.get("old_password") or ""
+            new_password = request.form.get("new_password") or ""
+            confirm_password = request.form.get("confirm_password") or ""
 
-        if errors:
-            for e in errors:
-                flash(e, "danger")
-            return render_template("reset_password.html", token=token)
+            if not g.user.check_password(old_password):
+                flash("Неправильний поточний пароль.", "danger")
+                return render_template("change_password.html")
 
-        user = reset_token.user
-        user.set_password(new_password)
-        reset_token.used = True
-        db.session.commit()
+            if len(new_password) < 8:
+                flash("Новий пароль має містити щонайменше 8 символів.", "danger")
+                return render_template("change_password.html")
 
-        flash("Пароль успішно змінено. Тепер увійдіть у систему.", "success")
-        return redirect(url_for("login"))
+            if new_password != confirm_password:
+                flash("Новий пароль і підтвердження не співпадають.", "danger")
+                return render_template("change_password.html")
 
-    return render_template("reset_password.html", token=token)
+            g.user.set_password(new_password)
+            db.session.commit()
 
+            flash("Пароль успішно змінено.", "success")
+            return redirect(url_for("profile"))
 
-@app.route("/profile/password", methods=["GET", "POST"])
-@login_required
-def change_password():
-    if request.method == "POST":
-        old_password = request.form.get("old_password") or ""
-        new_password = request.form.get("new_password") or ""
-        confirm_password = request.form.get("confirm_password") or ""
-
-        if not g.user.check_password(old_password):
-            flash("Неправильний поточний пароль.", "danger")
-            return render_template("change_password.html")
-
-        if len(new_password) < 8:
-            flash("Новий пароль має містити щонайменше 8 символів.", "danger")
-            return render_template("change_password.html")
-
-        if new_password != confirm_password:
-            flash("Новий пароль і підтвердження не співпадають.", "danger")
-            return render_template("change_password.html")
-
-        g.user.set_password(new_password)
-        db.session.commit()
-
-        flash("Пароль успішно змінено.", "success")
-        return redirect(url_for("profile"))
-
-    return render_template("change_password.html")
+        return render_template("change_password.html")
