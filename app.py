@@ -516,7 +516,6 @@ def cancel_application(application_id):
 
 # -----------------------
 # Ініціалізація БД
-# -----------------------
 
 @app.cli.command("init-db")
 def init_db_command():
