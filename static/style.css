@@ -1,0 +1,177 @@
+:root {
+    /* Колірна палітра (Темна тема) */
+    --bg-body: #121212;
+    --bg-card: #1e1e1e;
+    --bg-input: #2d2d2d;
+    --text-main: #e0e0e0;
+    --text-muted: #a0a0a0;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --border: #333333;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    background: var(--bg-body);
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* --- Хедер та Навігація --- */
+header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow);
+}
+
+nav {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav a {
+    color: var(--text-main);
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+nav a:first-child {
+    margin-left: 0;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary);
+}
+
+nav a:hover {
+    color: var(--primary);
+}
+
+/* --- Основний контент --- */
+main {
+    flex: 1;
+    width: 100%;
+    max-width: 900px;
+    margin: 2rem auto;
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+h1, h2, h3 {
+    color: #fff;
+    margin-top: 0;
+}
+
+h1 { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+/* --- Форми --- */
+form { margin-top: 1rem; }
+
+form label {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+form input, form textarea, form select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    color: #fff;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+form input:focus, form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* --- Кнопки --- */
+button {
+    margin-top: 1.5rem;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: inline-block;
+}
+
+button:hover {
+    background: var(--primary-hover);
+}
+
+/* Кнопка скасування (червона) */
+button[style*="b91c1c"] {
+    background: var(--danger) !important;
+}
+button[style*="b91c1c"]:hover {
+    background: var(--danger-hover) !important;
+}
+
+/* --- Таблиці --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th { text-align: left; color: var(--text-muted); border-bottom: 1px solid var(--border); padding: 10px; }
+td { border-bottom: 1px solid var(--border); padding: 12px 10px; }
+tr:last-child td { border-bottom: none; }
+
+/* --- Flash повідомлення --- */
+.flash {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid transparent;
+}
+.flash-success { background: #064e3b; color: #a7f3d0; border-left-color: #10b981; }
+.flash-danger  { background: #450a0a; color: #fecaca; border-left-color: #ef4444; }
+.flash-warning { background: #451a03; color: #fde68a; border-left-color: #f59e0b; }
+.flash-info    { background: #0c4a6e; color: #bae6fd; border-left-color: #0ea5e9; }
+
+/* --- Футер --- */
+footer {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: auto;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
