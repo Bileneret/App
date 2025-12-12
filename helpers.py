@@ -1,12 +1,9 @@
 from functools import wraps
-
 from flask import session, g, flash, redirect, request, url_for
-
 from models import User
 
 
 def send_password_reset_email(to_email: str, reset_link: str):
-    # Тут у тебе в оригіналі був просто print — залишаю так само.
     print("=== ЛИСТ ДЛЯ ВІДНОВЛЕННЯ ПАРОЛЯ ===")
     print(f"Кому: {to_email}")
     print(f"Посилання: {reset_link}")
@@ -15,7 +12,6 @@ def send_password_reset_email(to_email: str, reset_link: str):
 
 
 def get_current_user():
-    """Повертає поточного користувача або None."""
     user_id = session.get("user_id")
     if not user_id:
         return None
@@ -23,13 +19,29 @@ def get_current_user():
 
 
 def login_required(view_func):
-    """Простий декоратор для захисту сторінок, де потрібен логін."""
+    @wraps(view_func)
+    def wrapped_view(**kwargs):
+        if g.user is None:
+            flash("Будь ласка, увійдіть у систему.", "warning")
+            return redirect(url_for("login", next=request.path))
+        return view_func(**kwargs)
+
+    return wrapped_view
+
+
+def expert_required(view_func):
+    """Декоратор: доступ лише для експертів."""
 
     @wraps(view_func)
     def wrapped_view(**kwargs):
         if g.user is None:
             flash("Будь ласка, увійдіть у систему.", "warning")
             return redirect(url_for("login", next=request.path))
+
+        if g.user.role != 'expert':
+            flash("У вас немає прав доступу до цієї сторінки.", "danger")
+            return redirect(url_for("index"))
+
         return view_func(**kwargs)
 
     return wrapped_view

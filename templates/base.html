@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <title>{% block title %}Система заявок{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -14,6 +13,10 @@
         <a href="{{ url_for('index') }}" style="font-size: 1.2rem;">System App</a>
         <div>
             {% if g.user %}
+                {% if g.user.role == 'expert' %}
+                    <a href="{{ url_for('expert_dashboard') }}" style="color: #fbbf24;">Кабінет Експерта</a>
+                {% endif %}
+
                 <a href="{{ url_for('my_applications') }}">Мої заявки</a>
                 <a href="{{ url_for('profile') }}">Профіль</a>
                 <a href="{{ url_for('logout') }}" style="color: var(--danger);">Вийти</a>

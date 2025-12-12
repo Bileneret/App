@@ -4,12 +4,31 @@
 {% block content %}
 <h1>Заявка №{{ application.id }}</h1>
 
-<p><strong>Назва:</strong> {{ application.title }}</p>
-<p><strong>Статус:</strong> {{ application.status }}</p>
-<p><strong>Дата створення:</strong> {{ application.created_at }}</p>
-<p><strong>Останнє оновлення:</strong> {{ application.updated_at }}</p>
+<div style="margin-bottom: 20px;">
+    <p><strong>Назва:</strong> {{ application.title }}</p>
+    <p>
+        <strong>Статус:</strong>
+        {% if application.status == 'approved' %}
+            <span style="color: #10b981; font-weight: bold;">Схвалено</span>
+        {% elif application.status == 'rejected' %}
+            <span style="color: #ef4444; font-weight: bold;">Відхилено</span>
+        {% elif application.status == 'needs_changes' %}
+            <span style="color: #f59e0b; font-weight: bold;">Потребує змін</span>
+        {% else %}
+            {{ application.status }}
+        {% endif %}
+    </p>
+    <p><strong>Створено:</strong> {{ application.created_at.strftime('%Y-%m-%d') }}</p>
+</div>
 
-<h2>Короткий опис</h2>
+{% if application.expert_comment %}
+    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+        <h3 style="color: var(--primary); margin-top: 0;">Коментар експерта:</h3>
+        <p style="white-space: pre-wrap; margin-bottom: 0;">{{ application.expert_comment }}</p>
+    </div>
+{% endif %}
+
+<h2>Опис</h2>
 <p style="white-space: pre-wrap;">{{ application.short_description }}</p>
 
 <hr>
@@ -19,23 +38,19 @@
         <p>
             <a href="{{ url_for('edit_application', application_id=application.id) }}">Редагувати</a>
         </p>
-        <form action="{{ url_for('submit_application', application_id=application.id) }}"
-              method="post">
+        <form action="{{ url_for('submit_application', application_id=application.id) }}" method="post">
             <button type="submit">Подати на розгляд</button>
         </form>
 
     {% elif application.status == "submitted" %}
-        <p>Заявку подано на розгляд. Ви можете її скасувати, доки рішення ще не прийнято.</p>
-        <form action="{{ url_for('cancel_application', application_id=application.id) }}"
-              method="post">
+        <p>Заявку подано. Очікуйте рішення експерта.</p>
+        <form action="{{ url_for('cancel_application', application_id=application.id) }}" method="post">
             <button type="submit" style="background:#b91c1c;">Скасувати заявку</button>
         </form>
 
-    {% elif application.status == "cancelled" %}
-        <p>Цю заявку було скасовано. Вона зберігається в історії, але недоступна для подальшого опрацювання.</p>
+    {% elif application.status == "approved" %}
+        <p style="color: var(--text-muted);">Вітаємо! Вашу заявку схвалено.</p>
 
-    {% else %}
-        <p>Заявку вже опрацьовано (статус: {{ application.status }}), скасування недоступне.</p>
     {% endif %}
 {% endif %}
 

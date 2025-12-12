@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Кабінет Експерта{% endblock %}
+
+{% block content %}
+<h1>Заявки на розгляді</h1>
+
+{% if applications %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Назва</th>
+                <th>Автор</th>
+                <th>Дата подання</th>
+                <th>Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for app in applications %}
+            <tr>
+                <td>{{ app.id }}</td>
+                <td>{{ app.title }}</td>
+                <td>{{ app.owner.email }}</td>
+                <td>{{ app.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('expert_review', application_id=app.id) }}">Розглянути</a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Наразі немає нових заявок для розгляду.</p>
+{% endif %}
+{% endblock %}

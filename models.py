@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-from extensions import db  # ЗМІНЕНО: імпорт з extensions
+from extensions import db
+
 
 class User(db.Model):
     """Користувач системи."""
@@ -39,6 +40,10 @@ class Application(db.Model):
     title = db.Column(db.String(255), nullable=False)
     short_description = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(50), nullable=False, default="draft")
+
+    # НОВЕ ПОЛЕ:
+    expert_comment = db.Column(db.Text, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
