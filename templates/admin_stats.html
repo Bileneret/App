@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Статистика системи{% endblock %}
+
+{% block content %}
+<h1>Статистика системи</h1>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); text-align: center;">
+        <h3 style="color: var(--text-muted); font-size: 1rem;">Всього користувачів</h3>
+        <p style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #fff;">{{ total_users }}</p>
+    </div>
+    <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); text-align: center;">
+        <h3 style="color: var(--text-muted); font-size: 1rem;">Всього заявок</h3>
+        <p style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #fff;">{{ total_apps }}</p>
+    </div>
+</div>
+
+<h2>Заявки за статусом</h2>
+<table style="max-width: 600px;">
+    <thead>
+        <tr>
+            <th>Статус</th>
+            <th>Кількість</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="status-badge status-draft">Чорнетка</span></td>
+            <td>{{ stats.get('draft', 0) }}</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-submitted">На розгляді</span></td>
+            <td>{{ stats.get('submitted', 0) }}</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-needs-changes">Потребує змін</span></td>
+            <td>{{ stats.get('needs_changes', 0) }}</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-approved">Схвалено</span></td>
+            <td>{{ stats.get('approved', 0) }}</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-rejected">Відхилено</span></td>
+            <td>{{ stats.get('rejected', 0) }}</td>
+        </tr>
+        <tr>
+            <td><span class="status-badge status-cancelled">Скасовано</span></td>
+            <td>{{ stats.get('cancelled', 0) }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<p style="margin-top: 20px;">
+    <a href="{{ url_for('admin_users') }}">Повернутися до користувачів</a>
+</p>
+{% endblock %}

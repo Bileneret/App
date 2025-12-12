@@ -6,6 +6,7 @@ from helpers import get_current_user
 import auth_routes
 import application_routes
 import expert_routes
+import admin_routes  # <--- НОВИЙ МОДУЛЬ
 
 # -----------------------
 # Налаштування застосунку
@@ -24,7 +25,7 @@ db.init_app(app)
 auth_routes.register_routes(app)
 application_routes.register_routes(app)
 expert_routes.register_routes(app)
-
+admin_routes.register_routes(app)  # <--- РЕЄСТРАЦІЯ
 
 # -----------------------
 # Глобальний хук
@@ -46,28 +47,39 @@ def init_db_command():
     print("Базу даних ініціалізовано.")
 
 
-# python -m flask create-expert
 @app.cli.command("create-expert")
 def create_expert_command():
-    """Створює користувача-експерта (email: expert@test.com, pass: expert123)."""
+    """Створює користувача-експерта."""
     from models import User
     with app.app_context():
-        email = "expert123@test.com"
-        existing = User.query.filter_by(email=email).first()
-        if existing:
-            print(f"Експерт {email} вже існує.")
-            return
+        email = "expert@test.com"
+        if not User.query.filter_by(email=email).first():
+            u = User(email=email, role="expert")
+            u.set_password("expert123")
+            db.session.add(u)
+            db.session.commit()
+            print(f"Створено експерта: {email}")
+        else:
+            print("Експерт вже існує")
 
-        u = User(email=email, role="expert")
-        u.set_password("expert12345")
-        db.session.add(u)
-        db.session.commit()
-        print(f"Створено експерта: {email} / expert123")
+@app.cli.command("create-admin")
+def create_admin_command():
+    """Створює адміністратора (admin@test.com / admin123)."""
+    from models import User
+    with app.app_context():
+        email = "admin@test.com"
+        if not User.query.filter_by(email=email).first():
+            u = User(email=email, role="admin")
+            u.set_password("admin123")
+            db.session.add(u)
+            db.session.commit()
+            print(f"Створено адміна: {email}")
+        else:
+            print("Адмін вже існує")
 
 
 if __name__ == "__main__":
     from models import User, PasswordResetToken, Application
-
     with app.app_context():
         db.create_all()
     app.run(debug=True)

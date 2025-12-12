@@ -10,10 +10,10 @@ from flask import (
 )
 from email_validator import validate_email, EmailNotValidError
 
-# ВИДАЛЕНО: from app import app — це розриває коло
 from extensions import db
 from models import User, PasswordResetToken
 from helpers import login_required, send_password_reset_email
+
 
 def register_routes(app):
     """Функція для реєстрації маршрутів авторизації."""
@@ -68,11 +68,22 @@ def register_routes(app):
             password = request.form.get("password") or ""
 
             user = User.query.filter_by(email=email).first()
+
             if user and user.check_password(password):
+                # ПЕРЕВІРКА БЛОКУВАННЯ
+                if user.is_blocked:
+                    flash("Ваш акаунт заблоковано адміністратором.", "danger")
+                    return render_template("login.html", email=email)
+
                 session.clear()
                 session["user_id"] = user.id
                 flash("Ви успішно увійшли в систему.", "success")
                 next_url = request.args.get("next")
+
+                # Якщо це адмін, перенаправляємо одразу в адмінку
+                if user.role == 'admin':
+                    return redirect(url_for('admin_users'))
+
                 return redirect(next_url or url_for("profile"))
             else:
                 flash("Невірний e-mail або пароль.", "danger")

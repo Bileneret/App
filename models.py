@@ -7,7 +7,13 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), default="applicant")  # applicant / expert / admin
+
+    # Ролі: 'applicant', 'expert', 'admin'
+    role = db.Column(db.String(50), default="applicant")
+
+    # НОВЕ ПОЛЕ: Блокування користувача
+    is_blocked = db.Column(db.Boolean, default=False)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, raw_password: str) -> None:
@@ -41,7 +47,6 @@ class Application(db.Model):
     short_description = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(50), nullable=False, default="draft")
 
-    # НОВЕ ПОЛЕ:
     expert_comment = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

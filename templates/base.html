@@ -13,6 +13,11 @@
         <a href="{{ url_for('index') }}" style="font-size: 1.2rem;">System App</a>
         <div>
             {% if g.user %}
+
+                {% if g.user.role == 'admin' %}
+                    <a href="{{ url_for('admin_users') }}" style="color: #f472b6;">Адмін-панель</a>
+                {% endif %}
+
                 {% if g.user.role == 'expert' %}
                     <a href="{{ url_for('expert_dashboard') }}" style="color: #fbbf24;">Кабінет Експерта</a>
                 {% endif %}

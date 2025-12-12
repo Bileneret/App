@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Адміністрування користувачів{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1>Користувачі</h1>
+    <a href="{{ url_for('admin_stats') }}" class="status-badge status-submitted" style="font-size: 1rem; text-decoration: none;">Переглянути статистику</a>
+</div>
+
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Роль</th>
+            <th>Статус</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for u in users %}
+        <tr style="border-top: 1px solid #333;">
+            <td>{{ u.id }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+                {% if u.id != g.user.id %}
+                <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="post" style="display: inline-flex; gap: 5px; margin: 0;">
+                    <input type="hidden" name="action" value="change_role">
+                    <select name="role" onchange="this.form.submit()" style="padding: 4px; border-radius: 4px; background: #2d2d2d; color: white; border: 1px solid #444;">
+                        <option value="applicant" {% if u.role == 'applicant' %}selected{% endif %}>User</option>
+                        <option value="expert" {% if u.role == 'expert' %}selected{% endif %}>Expert</option>
+                        <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                </form>
+                {% else %}
+                    <span style="color: var(--primary); font-weight: bold;">Admin (Ви)</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if u.is_blocked %}
+                    <span class="status-badge status-rejected">Заблоковано</span>
+                {% else %}
+                    <span class="status-badge status-approved">Активний</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if u.id != g.user.id %}
+                <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="post" style="margin: 0;">
+                    <input type="hidden" name="action" value="toggle_block">
+                    {% if u.is_blocked %}
+                        <button type="submit" style="padding: 4px 8px; font-size: 0.8rem; background: var(--primary); margin: 0;">Розблокувати</button>
+                    {% else %}
+                        <button type="submit" style="padding: 4px 8px; font-size: 0.8rem; background: var(--danger); margin: 0;">Заблокувати</button>
+                    {% endif %}
+                </form>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
