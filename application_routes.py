@@ -7,10 +7,10 @@ from flask import (
     g,
 )
 
-# ВИДАЛЕНО: from app import app
 from extensions import db
 from models import Application
 from helpers import login_required
+
 
 def register_routes(app):
     """Функція для реєстрації маршрутів заявок."""
@@ -90,8 +90,9 @@ def register_routes(app):
             flash("Ви не можете редагувати цю заявку.", "danger")
             return redirect(url_for("my_applications"))
 
-        if app_obj.status != "draft":
-            flash("Редагувати можна лише чернетки.", "warning")
+        # ВИПРАВЛЕННЯ: Дозволяємо редагувати також 'needs_changes'
+        if app_obj.status not in ("draft", "needs_changes"):
+            flash("Редагувати можна лише чернетки або заявки на доопрацюванні.", "warning")
             return redirect(url_for("view_application", application_id=application_id))
 
         if request.method == "POST":
@@ -139,8 +140,9 @@ def register_routes(app):
             flash("Ви не можете подати цю заявку.", "danger")
             return redirect(url_for("my_applications"))
 
-        if app_obj.status != "draft":
-            flash("Подати можна лише чернетку.", "warning")
+        # ВИПРАВЛЕННЯ: Дозволяємо подавати також 'needs_changes'
+        if app_obj.status not in ("draft", "needs_changes"):
+            flash("Подати можна лише чернетку або заявку на доопрацюванні.", "warning")
             return redirect(url_for("view_application", application_id=application_id))
 
         if not app_obj.title or not app_obj.short_description:
@@ -148,6 +150,9 @@ def register_routes(app):
             return redirect(url_for("edit_application", application_id=application_id))
 
         app_obj.status = "submitted"
+        # Можна очистити коментар експерта при повторній подачі, щоб не плутати
+        # app_obj.expert_comment = None
+
         db.session.commit()
 
         flash("Заявку подано на розгляд.", "success")
