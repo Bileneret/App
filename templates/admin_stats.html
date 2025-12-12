@@ -10,7 +10,8 @@
         <p style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #fff;">{{ total_users }}</p>
     </div>
     <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); text-align: center;">
-        <h3 style="color: var(--text-muted); font-size: 1rem;">Всього заявок</h3>
+        <h3 style="color: var(--text-muted); font-size: 1rem;">Всього активних заявок</h3>
+        <p style="color: var(--text-muted); font-size: 0.8rem;">(без чорнеток)</p>
         <p style="font-size: 2rem; font-weight: bold; margin: 10px 0; color: #fff;">{{ total_apps }}</p>
     </div>
 </div>
@@ -24,10 +25,6 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td><span class="status-badge status-draft">Чорнетка</span></td>
-            <td>{{ stats.get('draft', 0) }}</td>
-        </tr>
         <tr>
             <td><span class="status-badge status-submitted">На розгляді</span></td>
             <td>{{ stats.get('submitted', 0) }}</td>

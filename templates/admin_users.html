@@ -7,6 +7,15 @@
     <a href="{{ url_for('admin_stats') }}" class="status-badge status-submitted" style="font-size: 1rem; text-decoration: none;">Переглянути статистику</a>
 </div>
 
+<div class="flash flash-info">
+    Ви увійшли як: <strong>{{ g.user.role|upper }}</strong>.
+    {% if g.user.role == 'admin' %}
+        У вас обмежені права (ви не можете змінювати інших адмінів).
+    {% elif g.user.role == 'super_admin' %}
+        У вас повні права.
+    {% endif %}
+</div>
+
 <table style="width: 100%; border-collapse: collapse;">
     <thead>
         <tr>
@@ -23,17 +32,24 @@
             <td>{{ u.id }}</td>
             <td>{{ u.email }}</td>
             <td>
-                {% if u.id != g.user.id %}
-                <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="post" style="display: inline-flex; gap: 5px; margin: 0;">
-                    <input type="hidden" name="action" value="change_role">
-                    <select name="role" onchange="this.form.submit()" style="padding: 4px; border-radius: 4px; background: #2d2d2d; color: white; border: 1px solid #444;">
-                        <option value="applicant" {% if u.role == 'applicant' %}selected{% endif %}>User</option>
-                        <option value="expert" {% if u.role == 'expert' %}selected{% endif %}>Expert</option>
-                        <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
-                    </select>
-                </form>
+                {% if u.id == g.user.id %}
+                    <span style="color: var(--primary); font-weight: bold;">Це ви ({{ u.role }})</span>
+
+                {% elif g.user.role == 'admin' and u.role in ['admin', 'super_admin'] %}
+                    <span style="color: #f472b6; font-weight: bold;">{{ u.role }}</span>
+
                 {% else %}
-                    <span style="color: var(--primary); font-weight: bold;">Admin (Ви)</span>
+                    <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="post" style="display: inline-flex; gap: 5px; margin: 0;">
+                        <input type="hidden" name="action" value="change_role">
+                        <select name="role" onchange="this.form.submit()" style="padding: 4px; border-radius: 4px; background: #2d2d2d; color: white; border: 1px solid #444;">
+                            <option value="applicant" {% if u.role == 'applicant' %}selected{% endif %}>User</option>
+                            <option value="expert" {% if u.role == 'expert' %}selected{% endif %}>Expert</option>
+
+                            {% if g.user.role == 'super_admin' %}
+                                <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                            {% endif %}
+                        </select>
+                    </form>
                 {% endif %}
             </td>
             <td>
@@ -44,17 +60,19 @@
                 {% endif %}
             </td>
             <td>
-                {% if u.id != g.user.id %}
-                <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="post" style="margin: 0;">
-                    <input type="hidden" name="action" value="toggle_block">
-                    {% if u.is_blocked %}
-                        <button type="submit" style="padding: 4px 8px; font-size: 0.8rem; background: var(--primary); margin: 0;">Розблокувати</button>
-                    {% else %}
-                        <button type="submit" style="padding: 4px 8px; font-size: 0.8rem; background: var(--danger); margin: 0;">Заблокувати</button>
-                    {% endif %}
-                </form>
-                {% else %}
+                {% if u.id == g.user.id %}
                     -
+                {% elif g.user.role == 'admin' and u.role in ['admin', 'super_admin'] %}
+                    <span style="color: #666;">Недоступно</span>
+                {% else %}
+                    <form action="{{ url_for('admin_update_user', user_id=u.id) }}" method="post" style="margin: 0;">
+                        <input type="hidden" name="action" value="toggle_block">
+                        {% if u.is_blocked %}
+                            <button type="submit" style="padding: 4px 8px; font-size: 0.8rem; background: var(--primary); margin: 0;">Розблокувати</button>
+                        {% else %}
+                            <button type="submit" style="padding: 4px 8px; font-size: 0.8rem; background: var(--danger); margin: 0;">Заблокувати</button>
+                        {% endif %}
+                    </form>
                 {% endif %}
             </td>
         </tr>

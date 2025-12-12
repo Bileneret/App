@@ -14,7 +14,7 @@
         <div>
             {% if g.user %}
 
-                {% if g.user.role == 'admin' %}
+                {% if g.user.role in ['admin', 'super_admin'] %}
                     <a href="{{ url_for('admin_users') }}" style="color: #f472b6;">Адмін-панель</a>
                 {% endif %}
 

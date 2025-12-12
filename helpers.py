@@ -30,14 +30,15 @@ def login_required(view_func):
 
 
 def expert_required(view_func):
-    """Декоратор: доступ лише для експертів (і адмінів)."""
+    """Декоратор: доступ лише для експертів (і всіх адмінів)."""
     @wraps(view_func)
     def wrapped_view(**kwargs):
         if g.user is None:
             flash("Будь ласка, увійдіть у систему.", "warning")
             return redirect(url_for("login", next=request.path))
 
-        if g.user.role not in ['expert', 'admin']:
+        # Дозволяємо доступ експертам, адмінам і супер-адмінам
+        if g.user.role not in ['expert', 'admin', 'super_admin']:
             flash("У вас немає прав доступу до цієї сторінки.", "danger")
             return redirect(url_for("index"))
 
@@ -47,14 +48,14 @@ def expert_required(view_func):
 
 
 def admin_required(view_func):
-    """Декоратор: доступ лише для адмінів."""
+    """Декоратор: доступ для адмінів та супер-адмінів."""
     @wraps(view_func)
     def wrapped_view(**kwargs):
         if g.user is None:
             flash("Будь ласка, увійдіть у систему.", "warning")
             return redirect(url_for("login", next=request.path))
 
-        if g.user.role != 'admin':
+        if g.user.role not in ['admin', 'super_admin']:
             flash("Доступ заборонено. Потрібні права адміністратора.", "danger")
             return redirect(url_for("index"))
 

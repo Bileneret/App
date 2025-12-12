@@ -6,7 +6,7 @@ from helpers import get_current_user
 import auth_routes
 import application_routes
 import expert_routes
-import admin_routes  # <--- НОВИЙ МОДУЛЬ
+import admin_routes
 
 # -----------------------
 # Налаштування застосунку
@@ -25,7 +25,8 @@ db.init_app(app)
 auth_routes.register_routes(app)
 application_routes.register_routes(app)
 expert_routes.register_routes(app)
-admin_routes.register_routes(app)  # <--- РЕЄСТРАЦІЯ
+admin_routes.register_routes(app)
+
 
 # -----------------------
 # Глобальний хук
@@ -64,7 +65,7 @@ def create_expert_command():
 
 @app.cli.command("create-admin")
 def create_admin_command():
-    """Створює адміністратора (admin@test.com / admin123)."""
+    """Створює звичайного адміністратора."""
     from models import User
     with app.app_context():
         email = "admin@test.com"
@@ -73,9 +74,24 @@ def create_admin_command():
             u.set_password("admin123")
             db.session.add(u)
             db.session.commit()
-            print(f"Створено адміна: {email}")
+            print(f"Створено звичайного адміна: {email}")
         else:
             print("Адмін вже існує")
+
+@app.cli.command("create-super-admin")
+def create_super_admin_command():
+    """Створює ГОЛОВНОГО адміністратора (може банити адмінів)."""
+    from models import User
+    with app.app_context():
+        email = "super@test.com"
+        if not User.query.filter_by(email=email).first():
+            u = User(email=email, role="super_admin")
+            u.set_password("super123")
+            db.session.add(u)
+            db.session.commit()
+            print(f"Створено ГОЛОВНОГО адміна: {email}")
+        else:
+            print("Головний адмін вже існує")
 
 
 if __name__ == "__main__":
