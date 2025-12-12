@@ -124,4 +124,4 @@ def test_reset_password_with_valid_token_changes_password(client, app, user):
 def test_invalid_email_validation_raises():
     """Перевірка валідатора email на некоректних даних."""
     with pytest.raises(EmailNotValidError):
-        validate_email ("not-an-email")
+        validate_email("not-an-email")
