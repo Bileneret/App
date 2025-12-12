@@ -17,7 +17,8 @@ def register_routes(app):
     @admin_required
     def admin_update_user(user_id):
         """Зміна ролі або статусу блокування з урахуванням прав доступу."""
-        target_user = User.query.get_or_404(user_id)
+        # ВИПРАВЛЕНО: Новий синтаксис SQLAlchemy
+        target_user = db.get_or_404(User, user_id)
         current_user = g.user
 
         # Захист: не можна редагувати самого себе
@@ -27,7 +28,7 @@ def register_routes(app):
 
         action = request.form.get("action")
 
-        # --- ЛОГІКА ОБМЕЖЕНЬ (VVAG-41, VVAG-42) ---
+        # --- ЛОГІКА ОБМЕЖЕНЬ ---
 
         # Якщо дію виконує звичайний адмін (не супер-адмін)
         if current_user.role == 'admin':
@@ -54,7 +55,7 @@ def register_routes(app):
             flash(f"Роль користувача {target_user.email} змінено на {new_role}.", "success")
 
         elif action == "toggle_block":
-            # (Додаткова перевірка) Звичайний адмін не може банити адмінів
+            # Звичайний адмін не може банити адмінів
             if current_user.role == 'admin' and target_user.role in ['admin', 'super_admin']:
                 flash("Ви не можете заблокувати цього користувача.", "danger")
                 return redirect(url_for("admin_users"))
@@ -80,12 +81,12 @@ def register_routes(app):
         # Перетворюємо в словник
         stats = {status: count for status, count in stats_query}
 
-        # Прибираємо чорнетки зі статистики (задача з трекера)
+        # Прибираємо чернетки зі статистики
         if 'draft' in stats:
             del stats['draft']
 
         total_users = User.query.count()
-        # Рахуємо загальну кількість заявок БЕЗ чорнеток
+        # Рахуємо загальну кількість заявок БЕЗ чернеток
         total_apps = Application.query.filter(Application.status != 'draft').count()
 
         return render_template("admin_stats.html", stats=stats, total_users=total_users, total_apps=total_apps)

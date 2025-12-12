@@ -73,7 +73,8 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>")
     @login_required
     def view_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО: Використовуємо db.get_or_404
+        app_obj = db.get_or_404(Application, application_id)
 
         if app_obj.owner_id != g.user.id:
             flash("Ви не маєте доступу до цієї заявки.", "danger")
@@ -84,13 +85,13 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>/edit", methods=["GET", "POST"])
     @login_required
     def edit_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО
+        app_obj = db.get_or_404(Application, application_id)
 
         if app_obj.owner_id != g.user.id:
             flash("Ви не можете редагувати цю заявку.", "danger")
             return redirect(url_for("my_applications"))
 
-        # ВИПРАВЛЕННЯ: Дозволяємо редагувати також 'needs_changes'
         if app_obj.status not in ("draft", "needs_changes"):
             flash("Редагувати можна лише чернетки або заявки на доопрацюванні.", "warning")
             return redirect(url_for("view_application", application_id=application_id))
@@ -134,13 +135,13 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>/submit", methods=["POST"])
     @login_required
     def submit_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО
+        app_obj = db.get_or_404(Application, application_id)
 
         if app_obj.owner_id != g.user.id:
             flash("Ви не можете подати цю заявку.", "danger")
             return redirect(url_for("my_applications"))
 
-        # ВИПРАВЛЕННЯ: Дозволяємо подавати також 'needs_changes'
         if app_obj.status not in ("draft", "needs_changes"):
             flash("Подати можна лише чернетку або заявку на доопрацюванні.", "warning")
             return redirect(url_for("view_application", application_id=application_id))
@@ -150,9 +151,6 @@ def register_routes(app):
             return redirect(url_for("edit_application", application_id=application_id))
 
         app_obj.status = "submitted"
-        # Можна очистити коментар експерта при повторній подачі, щоб не плутати
-        # app_obj.expert_comment = None
-
         db.session.commit()
 
         flash("Заявку подано на розгляд.", "success")
@@ -161,7 +159,8 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>/cancel", methods=["POST"])
     @login_required
     def cancel_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО
+        app_obj = db.get_or_404(Application, application_id)
 
         if app_obj.owner_id != g.user.id:
             flash("Ви не можете скасовувати чужу заявку.", "danger")

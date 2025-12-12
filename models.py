@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from extensions import db
 
 
@@ -14,7 +14,8 @@ class User(db.Model):
     # НОВЕ ПОЛЕ: Блокування користувача
     is_blocked = db.Column(db.Boolean, default=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Використовуємо lambda з timezone.utc замість datetime.utcnow
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def set_password(self, raw_password: str) -> None:
         from werkzeug.security import generate_password_hash
@@ -30,14 +31,18 @@ class PasswordResetToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     token = db.Column(db.String(64), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     used = db.Column(db.Boolean, default=False)
 
     user = db.relationship("User")
 
     @property
     def is_expired(self) -> bool:
-        return datetime.utcnow() > self.created_at + timedelta(hours=24)
+        # Порівнюємо поточний UTC час (приведений до naive format для сумісності з БД)
+        # з часом створення токена + 24 години
+        now_utc_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        return now_utc_naive > self.created_at + timedelta(hours=24)
 
 
 class Application(db.Model):
@@ -49,9 +54,11 @@ class Application(db.Model):
 
     expert_comment = db.Column(db.Text, nullable=True)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
 
     owner_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)

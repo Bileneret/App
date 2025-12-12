@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import session, g, flash, redirect, request, url_for
 from models import User
+from extensions import db  # Додано імпорт db
 
 
 def send_password_reset_email(to_email: str, reset_link: str):
@@ -15,7 +16,8 @@ def get_current_user():
     user_id = session.get("user_id")
     if not user_id:
         return None
-    return User.query.get(user_id)
+    # ВИПРАВЛЕНО: Використання нового методу отримання запису по ID
+    return db.session.get(User, user_id)
 
 
 def login_required(view_func):

@@ -12,7 +12,7 @@ def register_routes(app):
         apps = (
             Application.query
             .filter(Application.status == 'submitted')
-            .filter(Application.owner_id != g.user.id)  # <--- ДОДАНО: Виключаємо свої заявки
+            .filter(Application.owner_id != g.user.id)
             .order_by(Application.created_at.asc())
             .all()
         )
@@ -22,9 +22,10 @@ def register_routes(app):
     @expert_required
     def expert_review(application_id):
         """Сторінка розгляду конкретної заявки."""
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО: Використовуємо db.get_or_404
+        app_obj = db.get_or_404(Application, application_id)
 
-        # Додатковий захист: експерт не може оцінювати свою заявку, навіть якщо знає посилання
+        # Додатковий захист: експерт не може оцінювати свою заявку
         if app_obj.owner_id == g.user.id:
             flash("Ви не можете оцінювати власні заявки.", "danger")
             return redirect(url_for("expert_dashboard"))
@@ -43,7 +44,6 @@ def register_routes(app):
 
             app_obj.status = decision
             app_obj.expert_comment = comment
-            app_obj.updated_at = db.func.now()
 
             db.session.commit()
 
