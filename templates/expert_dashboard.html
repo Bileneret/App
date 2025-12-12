@@ -5,22 +5,30 @@
 <h1>Заявки на розгляді</h1>
 
 {% if applications %}
-    <table>
+    <table border="0" cellpadding="6" cellspacing="0" style="width: 100%;">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Назва</th>
-                <th>Автор</th>
-                <th>Дата подання</th>
-                <th>Дії</th>
+                <th align="left">ID</th>
+                <th align="left">Назва</th>
+                <th align="left">Автор</th>
+                <th align="left">Статус</th>
+                <th align="left">Дата подання</th>
+                <th align="left">Дії</th>
             </tr>
         </thead>
         <tbody>
         {% for app in applications %}
-            <tr>
+            <tr style="border-top: 1px solid #e5e7eb;">
                 <td>{{ app.id }}</td>
                 <td>{{ app.title }}</td>
                 <td>{{ app.owner.email }}</td>
+                <td>
+                    {% if app.status == 'submitted' %}
+                        <span class="status-badge status-submitted">На розгляді</span>
+                    {% else %}
+                        {{ app.status }}
+                    {% endif %}
+                </td>
                 <td>{{ app.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td>
                     <a href="{{ url_for('expert_review', application_id=app.id) }}">Розглянути</a>

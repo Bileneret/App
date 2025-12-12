@@ -46,19 +46,20 @@ def init_db_command():
     print("Базу даних ініціалізовано.")
 
 
+# python -m flask create-expert
 @app.cli.command("create-expert")
 def create_expert_command():
     """Створює користувача-експерта (email: expert@test.com, pass: expert123)."""
     from models import User
     with app.app_context():
-        email = "expert@test.com"
+        email = "expert123@test.com"
         existing = User.query.filter_by(email=email).first()
         if existing:
             print(f"Експерт {email} вже існує.")
             return
 
         u = User(email=email, role="expert")
-        u.set_password("expert123")
+        u.set_password("expert12345")
         db.session.add(u)
         db.session.commit()
         print(f"Створено експерта: {email} / expert123")

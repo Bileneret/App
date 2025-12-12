@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, g
 from extensions import db
 from models import Application
 from helpers import expert_required
@@ -8,10 +8,11 @@ def register_routes(app):
     @app.route("/expert/applications")
     @expert_required
     def expert_dashboard():
-        """Список заявок, поданих на розгляд (submitted)."""
+        """Список заявок, поданих на розгляд (submitted), ОКРІМ власних."""
         apps = (
             Application.query
             .filter(Application.status == 'submitted')
+            .filter(Application.owner_id != g.user.id)  # <--- ДОДАНО: Виключаємо свої заявки
             .order_by(Application.created_at.asc())
             .all()
         )
@@ -23,15 +24,19 @@ def register_routes(app):
         """Сторінка розгляду конкретної заявки."""
         app_obj = Application.query.get_or_404(application_id)
 
+        # Додатковий захист: експерт не може оцінювати свою заявку, навіть якщо знає посилання
+        if app_obj.owner_id == g.user.id:
+            flash("Ви не можете оцінювати власні заявки.", "danger")
+            return redirect(url_for("expert_dashboard"))
+
         if request.method == "POST":
-            decision = request.form.get("decision")  # approved, rejected, needs_changes
+            decision = request.form.get("decision")
             comment = (request.form.get("comment") or "").strip()
 
             if decision not in ["approved", "rejected", "needs_changes"]:
                 flash("Невірний статус рішення.", "danger")
                 return redirect(url_for("expert_review", application_id=app_obj.id))
 
-            # Якщо відхиляємо або відправляємо на доопрацювання - коментар обов'язковий
             if decision in ["rejected", "needs_changes"] and not comment:
                 flash("Для цього рішення коментар є обов'язковим!", "danger")
                 return render_template("expert_review.html", application=app_obj)

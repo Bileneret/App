@@ -24,8 +24,24 @@
             <tr style="border-top: 1px solid #e5e7eb;">
                 <td>{{ app.id }}</td>
                 <td>{{ app.title }}</td>
-                <td>{{ app.status }}</td>
-                <td>{{ app.created_at }}</td>
+                <td>
+                    {% if app.status == 'draft' %}
+                        <span class="status-badge status-draft">Чорнетка</span>
+                    {% elif app.status == 'submitted' %}
+                        <span class="status-badge status-submitted">На розгляді</span>
+                    {% elif app.status == 'needs_changes' %}
+                        <span class="status-badge status-needs-changes">Потребує змін</span>
+                    {% elif app.status == 'approved' %}
+                        <span class="status-badge status-approved">Схвалено</span>
+                    {% elif app.status == 'rejected' %}
+                        <span class="status-badge status-rejected">Відхилено</span>
+                    {% elif app.status == 'cancelled' %}
+                        <span class="status-badge status-cancelled">Скасовано</span>
+                    {% else %}
+                        {{ app.status }}
+                    {% endif %}
+                </td>
+                <td>{{ app.created_at.strftime('%Y-%m-%d') }}</td>
                 <td>
                     <a href="{{ url_for('view_application', application_id=app.id) }}">Переглянути</a>
 
@@ -33,14 +49,14 @@
                         | <a href="{{ url_for('edit_application', application_id=app.id) }}">Редагувати</a>
                         | <form action="{{ url_for('submit_application', application_id=app.id) }}"
                                 method="post" style="display:inline;">
-                            <button type="submit" style="background:none;border:none;color:#2563eb;cursor:pointer;padding:0;">
+                            <button type="submit" style="background:none;border:none;color:#2563eb;cursor:pointer;padding:0;font-size:inherit;margin:0;">
                                 Подати
                             </button>
                         </form>
                     {% elif app.status == "submitted" %}
                         | <form action="{{ url_for('cancel_application', application_id=app.id) }}"
                                 method="post" style="display:inline;">
-                            <button type="submit" style="background:none;border:none;color:#b91c1c;cursor:pointer;padding:0;">
+                            <button type="submit" style="background:none;border:none;color:#b91c1c;cursor:pointer;padding:0;font-size:inherit;margin:0;">
                                 Скасувати
                             </button>
                         </form>

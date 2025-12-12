@@ -6,18 +6,25 @@
 
 <div style="margin-bottom: 20px;">
     <p><strong>Назва:</strong> {{ application.title }}</p>
-    <p>
+    <div style="margin: 10px 0; display: flex; align-items: center; gap: 10px;">
         <strong>Статус:</strong>
-        {% if application.status == 'approved' %}
-            <span style="color: #10b981; font-weight: bold;">Схвалено</span>
-        {% elif application.status == 'rejected' %}
-            <span style="color: #ef4444; font-weight: bold;">Відхилено</span>
+
+        {% if application.status == 'draft' %}
+            <span class="status-badge status-draft">Чорнетка</span>
+        {% elif application.status == 'submitted' %}
+            <span class="status-badge status-submitted">На розгляді</span>
         {% elif application.status == 'needs_changes' %}
-            <span style="color: #f59e0b; font-weight: bold;">Потребує змін</span>
+            <span class="status-badge status-needs-changes">Потребує змін</span>
+        {% elif application.status == 'approved' %}
+            <span class="status-badge status-approved">Схвалено</span>
+        {% elif application.status == 'rejected' %}
+            <span class="status-badge status-rejected">Відхилено</span>
+        {% elif application.status == 'cancelled' %}
+            <span class="status-badge status-cancelled">Скасовано</span>
         {% else %}
             {{ application.status }}
         {% endif %}
-    </p>
+    </div>
     <p><strong>Створено:</strong> {{ application.created_at.strftime('%Y-%m-%d') }}</p>
 </div>
 
