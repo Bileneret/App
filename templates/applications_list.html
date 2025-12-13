@@ -54,9 +54,10 @@
                             </button>
                         </form>
                     {% elif app.status == "submitted" %}
-                        | <form action="{{ url_for('cancel_application', application_id=app.id) }}"
-                                method="post" style="display:inline;">
-                            <button type="submit" style="background:none;border:none;color:#b91c1c;cursor:pointer;padding:0;font-size:inherit;margin:0;">
+                        <form action="{{ url_for('cancel_application', application_id=app.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="status-badge status-rejected"
+                                    style="cursor:pointer; margin:0; font-size: 0.85rem; font-weight: 600;"
+                                    onclick="return confirm('Ви впевнені, що хочете скасувати цю заявку?');">
                                 Скасувати
                             </button>
                         </form>

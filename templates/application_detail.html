@@ -85,10 +85,14 @@
         </form>
 
     {% elif application.status == "submitted" %}
-        <p>Заявку подано. Очікуйте рішення експерта.</p>
-        <form action="{{ url_for('cancel_application', application_id=application.id) }}" method="post">
-            <button type="submit" style="background:#b91c1c;">Скасувати заявку</button>
-        </form>
+            <p>Заявку подано. Очікуйте рішення експерта.</p>
+            <form action="{{ url_for('cancel_application', application_id=application.id) }}" method="post">
+                <button type="submit" class="status-badge status-rejected"
+                        style="cursor:pointer; margin-top: 10px; font-size: 0.9rem;"
+                        onclick="return confirm('Ви впевнені, що хочете скасувати цю заявку?');">
+                    Скасувати заявку
+                </button>
+            </form>
 
     {% elif application.status == "approved" %}
         <p style="color: var(--text-muted);">Вітаємо! Вашу заявку схвалено.</p>
