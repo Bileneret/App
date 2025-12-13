@@ -1,6 +1,6 @@
 import os
 from flask import Flask, g, render_template, flash, redirect, url_for
-from extensions import db
+from extensions import db, mail
 from helpers import get_current_user
 
 # Імпорти модулів маршрутів
@@ -18,25 +18,34 @@ app.config["SECRET_KEY"] = "change-me-in-production"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# --- НАЛАШТУВАННЯ ПОШТИ (SMTP) ---
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+
+# Ваші реальні дані для входу
+app.config['MAIL_USERNAME'] = 'copyregsystem@gmail.com'
+app.config['MAIL_PASSWORD'] = 'qmog ycrm pvnc stvr'
+
+# Від кого будуть приходити листи
+app.config['MAIL_DEFAULT_SENDER'] = 'copyregsystem@gmail.com'
+
 # Налаштування завантаження файлів
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-
-# ЗБІЛЬШЕНО ЛІМІТ: 100 МБ (щоб 23 файли могли "зайти" на сервер для обробки)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
-
-# Створюємо папку для завантажень
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Ініціалізація розширень
 db.init_app(app)
+mail.init_app(app)
 
 # -----------------------
-# Обробка помилок (Error Handlers)
+# Обробка помилок
 # -----------------------
 @app.errorhandler(413)
 def request_entity_too_large(error):
     """Обробка помилки, коли файли занадто великі."""
     flash("Загальний розмір файлів занадто великий! Спробуйте завантажити менше файлів.", "danger")
-    # Повертаємо користувача назад (на попередню сторінку або на список)
     return redirect(url_for('my_applications'))
 
 # -----------------------
