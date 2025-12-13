@@ -28,7 +28,6 @@ body {
     line-height: 1.6;
 }
 
-/* --- Хедер та Навігація --- */
 header {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
@@ -63,7 +62,6 @@ nav a:hover {
     color: var(--primary);
 }
 
-/* --- Основний контент --- */
 main {
     flex: 1;
     width: 100%;
@@ -88,7 +86,6 @@ a:hover { text-decoration: underline; }
 
 hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
 
-/* --- Форми --- */
 form { margin-top: 1rem; }
 
 form label {
@@ -115,7 +112,6 @@ form input:focus, form textarea:focus {
     border-color: var(--primary);
 }
 
-/* --- Кнопки --- */
 button {
     margin-top: 1.5rem;
     padding: 10px 20px;
@@ -134,7 +130,6 @@ button:hover {
     background: var(--primary-hover);
 }
 
-/* Кнопка скасування (червона) */
 button[style*="b91c1c"] {
     background: var(--danger) !important;
 }
@@ -142,7 +137,6 @@ button[style*="b91c1c"]:hover {
     background: var(--danger-hover) !important;
 }
 
-/* --- Таблиці --- */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -153,7 +147,6 @@ th { text-align: left; color: var(--text-muted); border-bottom: 1px solid var(--
 td { border-bottom: 1px solid var(--border); padding: 12px 10px; }
 tr:last-child td { border-bottom: none; }
 
-/* --- Flash повідомлення --- */
 .flash {
     padding: 12px 16px;
     border-radius: 6px;
@@ -165,7 +158,6 @@ tr:last-child td { border-bottom: none; }
 .flash-warning { background: #451a03; color: #fde68a; border-left-color: #f59e0b; }
 .flash-info    { background: #0c4a6e; color: #bae6fd; border-left-color: #0ea5e9; }
 
-/* --- Футер --- */
 footer {
     background: var(--bg-card);
     border-top: 1px solid var(--border);
@@ -176,148 +168,71 @@ footer {
     font-size: 0.9rem;
 }
 
-/* --- Статуси (Badges) --- */
+/* Статуси */
 .status-badge {
     display: inline-block;
     padding: 4px 12px;
-    border-radius: 50px; /* Робить форму овальною */
+    border-radius: 50px;
     font-size: 0.85rem;
     font-weight: 600;
     text-align: center;
     white-space: nowrap;
 }
-
-/* Кольори статусів */
-.status-draft {
-    background-color: #3f3f46; /* Сірий */
-    color: #d4d4d8;
-    border: 1px solid #52525b;
-}
-
-.status-submitted {
-    background-color: #172554; /* Синій */
-    color: #93c5fd;
-    border: 1px solid #1e40af;
-}
-
-.status-needs-changes {
-    background-color: #451a03; /* Жовто-помаранчевий */
-    color: #fcd34d;
-    border: 1px solid #b45309;
-}
-
-.status-approved {
-    background-color: #064e3b; /* Зелений */
-    color: #6ee7b7;
-    border: 1px solid #059669;
-}
-
-.status-rejected {
-    background-color: #450a0a; /* Червоний */
-    color: #fca5a5;
-    border: 1px solid #b91c1c;
-}
-
-.status-cancelled {
-    background-color: #18181b; /* Темно-сірий */
-    color: #a1a1aa;
-    border: 1px solid #3f3f46;
-    text-decoration: line-through;
-}
-Крок 3. Оновлення списку "Мої заявки" (templates/applications_list.html)
-Ми замінюємо просте виведення {{ app.status }} на конструкцію if/elif, яка підставляє правильний клас CSS та український текст.
-
-Файл: templates/applications_list.html
-
-HTML
-
-{% extends "base.html" %}
-{% block title %}Мої заявки{% endblock %}
-
-{% block content %}
-<h1>Мої заявки</h1>
-
-<p>
-    <a href="{{ url_for('create_application') }}">Створити нову заявку</a>
-</p>
-
-{% if applications %}
-    <table border="0" cellpadding="6" cellspacing="0" style="width: 100%;">
-        <thead>
-            <tr>
-                <th align="left">ID</th>
-                <th align="left">Назва</th>
-                <th align="left">Статус</th>
-                <th align="left">Створена</th>
-                <th align="left">Дії</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for app in applications %}
-            <tr style="border-top: 1px solid #e5e7eb;">
-                <td>{{ app.id }}</td>
-                <td>{{ app.title }}</td>
-                <td>
-                    {% if app.status == 'draft' %}
-                        <span class="status-badge status-draft">Чорнетка</span>
-                    {% elif app.status == 'submitted' %}
-                        <span class="status-badge status-submitted">На розгляді</span>
-                    {% elif app.status == 'needs_changes' %}
-                        <span class="status-badge status-needs-changes">Потребує змін</span>
-                    {% elif app.status == 'approved' %}
-                        <span class="status-badge status-approved">Схвалено</span>
-                    {% elif app.status == 'rejected' %}
-                        <span class="status-badge status-rejected">Відхилено</span>
-                    {% elif app.status == 'cancelled' %}
-                        <span class="status-badge status-cancelled">Скасовано</span>
-                    {% else %}
-                        {{ app.status }}
-                    {% endif %}
-                </td>
-                <td>{{ app.created_at.strftime('%Y-%m-%d') }}</td>
-                <td>
-                    <a href="{{ url_for('view_application', application_id=app.id) }}">Переглянути</a>
-
-                    {% if app.status in ("draft", "needs_changes") %}
-                        | <a href="{{ url_for('edit_application', application_id=app.id) }}">Редагувати</a>
-                        | <form action="{{ url_for('submit_application', application_id=app.id) }}"
-                                method="post" style="display:inline;">
-                            <button type="submit" style="background:none;border:none;color:#2563eb;cursor:pointer;padding:0;font-size:inherit;margin:0;">
-                                Подати
-                            </button>
-                        </form>
-                    {% elif app.status == "submitted" %}
-                        | <form action="{{ url_for('cancel_application', application_id=app.id) }}"
-                                method="post" style="display:inline;">
-                            <button type="submit" style="background:none;border:none;color:#b91c1c;cursor:pointer;padding:0;font-size:inherit;margin:0;">
-                                Скасувати
-                            </button>
-                        </form>
-                    {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>У вас ще немає жодної заявки.</p>
-{% endif %}
-{% endblock %}
-
-/* --- Статуси (Badges) --- */
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 50px; /* Овал */
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-}
-
 .status-draft { background-color: #3f3f46; color: #d4d4d8; border: 1px solid #52525b; }
 .status-submitted { background-color: #172554; color: #93c5fd; border: 1px solid #1e40af; }
 .status-needs-changes { background-color: #451a03; color: #fcd34d; border: 1px solid #b45309; }
 .status-approved { background-color: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
 .status-rejected { background-color: #450a0a; color: #fca5a5; border: 1px solid #b91c1c; }
 .status-cancelled { background-color: #18181b; color: #a1a1aa; border: 1px solid #3f3f46; text-decoration: line-through; }
+
+/* --- Кнопка "Показати пароль" --- */
+.password-wrapper {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 45px;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+
+    height: 100%;
+    width: 40px;
+    background: transparent !important;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #ffffff !important; /* За замовчуванням біла */
+    opacity: 1;
+
+    padding: 0;
+    margin: 0 !important;
+    z-index: 99;
+}
+
+.toggle-password-btn:hover {
+    opacity: 0.8;
+}
+
+.toggle-password-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* --- Fix for Browser Autofill (Виправлення для автозаповнення) --- */
+/* Цей селектор каже: якщо input має стан autofill (став білим),
+   то кнопку, яка стоїть одразу після нього (+), зробити чорною */
+input:-webkit-autofill + .toggle-password-btn {
+    color: #000000 !important;
+    opacity: 1 !important;
+}
