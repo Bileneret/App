@@ -1,52 +1,71 @@
+import io
 from extensions import db
-from models import Application
+# ВИПРАВЛЕНО: Додано імпорт User
+from models import Application, User
 
 
-def test_create_application_success(client, app, user):
-    """Перевірка створення заявки (має стати Draft)."""
-    # 1. Логінимось
+def test_create_application_with_files(client, user):
     client.post("/login", data={"email": user.email, "password": "StrongPass1"})
 
-    # 2. Створюємо заявку
-    response = client.post(
-        "/applications/new",
-        data={
-            "title": "Тестова заявка",
-            "short_description": "Опис винаходу"
-        },
-        follow_redirects=True
-    )
+    data = {
+        "title": "New App",
+        "short_description": "Description",
+        "files": (io.BytesIO(b"file content"), 'test.txt')
+    }
 
-    assert response.status_code == 200
-    assert "Заявку створено як чернетку" in response.get_data(as_text=True)
+    response = client.post("/applications/new", data=data, content_type='multipart/form-data', follow_redirects=True)
+    assert "Заявку успішно створено" in response.get_data(as_text=True)
+    assert "test.txt" in response.get_data(as_text=True)
 
-    # 3. Перевіряємо в БД
+
+def test_submit_application(client, app, user):
+    # 1. Створюємо чернетку
     with app.app_context():
-        # Шукаємо заявку в базі
-        app_db = Application.query.filter_by(title="Тестова заявка").first()
-        assert app_db is not None
-        assert app_db.status == "draft"
+        u = db.session.merge(user)
+        app_obj = Application(title="Draft", short_description="Desc", owner=u, status="draft")
+        db.session.add(app_obj)
+        db.session.commit()
+        app_id = app_obj.id
 
-
-def test_submit_application_changes_status(client, app, user):
-    """Перевірка подачі заявки (Draft -> Submitted)."""
-    # 1. Логін
     client.post("/login", data={"email": user.email, "password": "StrongPass1"})
 
-    # 2. Створюємо заявку (через клієнт, щоб імітувати реального користувача)
-    client.post("/applications/new", data={"title": "App to Submit", "short_description": "Desc"})
-
-    # Отримуємо ID нової заявки з бази
-    with app.app_context():
-        app_id = Application.query.filter_by(title="App to Submit").first().id
-
-    # 3. Натискаємо кнопку "Подати" (імітація POST запиту)
+    # 2. Подаємо заявку
     response = client.post(f"/applications/{app_id}/submit", follow_redirects=True)
-
-    assert response.status_code == 200
     assert "Заявку подано на розгляд" in response.get_data(as_text=True)
 
-    # 4. Перевіряємо, чи змінився статус
     with app.app_context():
-        updated_app = db.session.get(Application, app_id)
-        assert updated_app.status == "submitted"
+        assert db.session.get(Application, app_id).status == "submitted"
+
+
+def test_edit_submitted_application_forbidden(client, app, user):
+    """Не можна редагувати заявку, яка вже подана."""
+    with app.app_context():
+        u = db.session.merge(user)
+        app_obj = Application(title="Submitted", short_description="Desc", owner=u, status="submitted")
+        db.session.add(app_obj)
+        db.session.commit()
+        app_id = app_obj.id
+
+    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+    response = client.post(f"/applications/{app_id}/edit", data={"title": "New Title"}, follow_redirects=True)
+
+    assert "Редагувати можна лише чернетки" in response.get_data(as_text=True)
+
+
+def test_access_other_user_application(client, app, user):
+    """Користувач не повинен бачити чужі заявки."""
+    with app.app_context():
+        other_user = User(email="other@test.com", role="applicant")
+        other_user.set_password("pass")
+        db.session.add(other_user)
+        db.session.flush()
+
+        app_obj = Application(title="Secret", short_description="Desc", owner=other_user)
+        db.session.add(app_obj)
+        db.session.commit()
+        app_id = app_obj.id
+
+    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+    response = client.get(f"/applications/{app_id}", follow_redirects=True)
+
+    assert "Ви не маєте доступу" in response.get_data(as_text=True)

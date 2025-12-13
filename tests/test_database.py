@@ -1,12 +1,13 @@
 import pytest
 from sqlalchemy.exc import IntegrityError
 from extensions import db
-from models import User, Application, Author
+# ВИПРАВЛЕНО: Прибрали Author, додали ApplicationFile
+from models import User, Application, ApplicationFile
 
 
 def test_database_relationship_chain(app):
     """
-    Тестування ланцюжка: User -> Application -> Author.
+    Тестування ланцюжка: User -> Application -> ApplicationFile.
     Перевіряємо, що дані коректно зберігаються на всіх 3 рівнях.
     """
     with app.app_context():
@@ -21,14 +22,14 @@ def test_database_relationship_chain(app):
         db.session.add(app_obj)
         db.session.commit()
 
-        # 3. Створюємо Авторів для цієї заявки
-        author1 = Author(full_name="Author One", application=app_obj)
-        author2 = Author(full_name="Author Two", application=app_obj)
-        db.session.add_all([author1, author2])
+        # 3. Створюємо Файли для цієї заявки (замість неіснуючих Авторів)
+        file1 = ApplicationFile(filename="doc1.txt", application=app_obj)
+        file2 = ApplicationFile(filename="doc2.pdf", application=app_obj)
+        db.session.add_all([file1, file2])
         db.session.commit()
 
         # --- ПЕРЕВІРКА (Retrieval) ---
-        # Витягуємо юзера і перевіряємо, чи бачить він авторів через заявку
+        # Витягуємо юзера і перевіряємо, чи бачить він файли через заявку
         user_from_db = db.session.get(User, u.id)
 
         # Перевірка зв'язку User -> Application
@@ -36,10 +37,12 @@ def test_database_relationship_chain(app):
         my_app = user_from_db.applications[0]
         assert my_app.title == "Chain App"
 
-        # Перевірка зв'язку Application -> Author
-        assert len(my_app.authors) == 2
-        assert my_app.authors[0].full_name == "Author One"
-        assert my_app.authors[1].full_name == "Author Two"
+        # Перевірка зв'язку Application -> ApplicationFile
+        assert len(my_app.files) == 2
+        # Перевіряємо наявність імен файлів
+        filenames = {f.filename for f in my_app.files}
+        assert "doc1.txt" in filenames
+        assert "doc2.pdf" in filenames
 
 
 def test_database_constraints_unique_email(app):
