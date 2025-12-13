@@ -8,7 +8,7 @@ from flask import (
     session,
     g,
 )
-from markupsafe import Markup  # Необхідно для форматування списку помилок
+from markupsafe import Markup  # Для форматування списку помилок
 from email_validator import validate_email, EmailNotValidError
 
 from extensions import db
@@ -30,29 +30,73 @@ def register_routes(app):
             password = request.form.get("password") or ""
             confirm_password = request.form.get("confirm_password") or ""
 
-            errors = []
+            # --- 1. Виконуємо всі перевірки (збираємо статус) ---
+
+            # Перевірка валідності E-mail
+            email_error_text = None
+            normalized_email = email  # За замовчуванням залишаємо те, що ввів юзер
 
             try:
                 valid = validate_email(email)
-                email = valid.email
+                normalized_email = valid.email
             except EmailNotValidError as e:
-                errors.append(f"Некоректний e-mail: {str(e)}")
+                msg = str(e)
+                # Переклад специфічної помилки домену
+                # Початкове: "The domain name test.com does not accept email"
+                # Очікуване: "Домен test.com не приймає електронну пошту"
+                if "The domain name" in msg and "does not accept email" in msg:
+                    msg = msg.replace("The domain name", "Домен")
+                    msg = msg.replace("does not accept email", "не приймає електронну пошту")
 
-            if len(password) < 8:
-                errors.append("Пароль має містити щонайменше 8 символів.")
-            if password != confirm_password:
-                errors.append("Паролі не співпадають.")
+                # Додатковий переклад для "does not exist" (часта помилка)
+                if "The domain name" in msg and "does not exist" in msg:
+                    msg = msg.replace("The domain name", "Домен")
+                    msg = msg.replace("does not exist", "не існує")
 
-            existing = User.query.filter_by(email=email).first()
-            if existing:
-                errors.append("Користувач з таким e-mail уже зареєстрований.")
+                email_error_text = f"Некоректний e-mail: {msg}"
 
-            if errors:
-                for e in errors:
-                    flash(e, "danger")
+            # Перевірка на існування користувача в БД
+            # Використовуємо normalized_email, якщо валідація пройшла успішно,
+            # або оригінальний email, якщо валідація впала (щоб все одно перевірити базу)
+            existing_user = User.query.filter_by(email=normalized_email).first()
+            is_exists = (existing_user is not None)
+
+            # Перевірки пароля
+            is_length_bad = len(password) < 8
+            is_mismatch = password != confirm_password
+
+            # --- 2. Формуємо список помилок за ПРІОРИТЕТОМ ---
+            error_messages = []
+
+            # Пріорітет 1: Користувач вже існує
+            if is_exists:
+                error_messages.append("Користувач з таким e-mail уже зареєстрований.")
+
+            # Пріорітет 2: Довжина пароля
+            if is_length_bad:
+                error_messages.append("Пароль має містити щонайменше 8 символів.")
+
+            # Пріорітет 3: Співпадіння паролів
+            if is_mismatch:
+                error_messages.append("Паролі не співпадають.")
+
+            # Пріорітет 4: Некоректний email
+            if email_error_text:
+                error_messages.append(email_error_text)
+
+            # --- 3. Якщо є помилки — виводимо одним повідомленням ---
+            if error_messages:
+                formatted_errors = []
+                for i, msg in enumerate(error_messages):
+                    formatted_errors.append(f"{i + 1}. {msg}")
+
+                final_html_msg = "<br>".join(formatted_errors)
+
+                flash(Markup(final_html_msg), "danger")
                 return render_template("register.html", email=email)
 
-            user = User(email=email)
+            # --- 4. Якщо помилок немає — реєструємо ---
+            user = User(email=normalized_email)
             user.set_password(password)
             db.session.add(user)
             db.session.commit()
@@ -178,12 +222,12 @@ def register_routes(app):
     @login_required
     def change_password():
         if request.method == "POST":
-            # ВИПРАВЛЕННЯ ТУТ: беремо "current_password", як в HTML, а не "old_password"
+            # Беремо "current_password" як в HTML
             current_password = request.form.get("current_password") or ""
             new_password = request.form.get("new_password") or ""
             confirm_password = request.form.get("confirm_password") or ""
 
-            # 1. Збираємо результати перевірок (bool)
+            # 1. Збираємо результати перевірок
             is_length_bad = len(new_password) < 8
             is_mismatch = new_password != confirm_password
             is_old_wrong = not g.user.check_password(current_password)
@@ -203,20 +247,17 @@ def register_routes(app):
             if is_old_wrong:
                 error_messages.append("Неправильний поточний пароль.")
 
-            # 3. Якщо є хоч одна помилка - виводимо їх усі
+            # 3. Вивід помилок
             if error_messages:
-                # Формуємо нумерований список
                 formatted_errors = []
                 for i, msg in enumerate(error_messages):
                     formatted_errors.append(f"{i + 1}. {msg}")
 
                 final_html_msg = "<br>".join(formatted_errors)
-
-                # Markup каже Flask-у, що теги <br> безпечні
                 flash(Markup(final_html_msg), "danger")
                 return render_template("change_password.html")
 
-            # Якщо помилок немає
+            # Успіх
             g.user.set_password(new_password)
             db.session.commit()
 
