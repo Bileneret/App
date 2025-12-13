@@ -5,7 +5,9 @@
 <h1>Мої заявки</h1>
 
 <p>
-    <a href="{{ url_for('create_application') }}">Створити нову заявку</a>
+    <a href="{{ url_for('create_application') }}" class="status-badge status-approved" style="text-decoration: none; font-size: 1rem; padding: 8px 16px;">
+        + Створити нову заявку
+    </a>
 </p>
 
 {% if applications %}
@@ -42,19 +44,32 @@
                     {% endif %}
                 </td>
                 <td>{{ app.created_at.strftime('%Y-%m-%d') }}</td>
-                <td>
-                    <a href="{{ url_for('view_application', application_id=app.id) }}">Переглянути</a>
+                <td style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
+
+                    <a href="{{ url_for('view_application', application_id=app.id) }}"
+                       class="status-badge status-submitted"
+                       style="text-decoration: none; cursor: pointer;">
+                       Переглянути
+                    </a>
 
                     {% if app.status in ("draft", "needs_changes") %}
-                        | <a href="{{ url_for('edit_application', application_id=app.id) }}">Редагувати</a>
-                        | <form action="{{ url_for('submit_application', application_id=app.id) }}"
-                                method="post" style="display:inline;">
-                            <button type="submit" style="background:none;border:none;color:#2563eb;cursor:pointer;padding:0;font-size:inherit;margin:0;">
+                        <a href="{{ url_for('edit_application', application_id=app.id) }}"
+                           class="status-badge status-needs-changes"
+                           style="text-decoration: none; cursor: pointer;">
+                           Редагувати
+                        </a>
+
+                        <form action="{{ url_for('submit_application', application_id=app.id) }}"
+                                method="post" style="margin:0;">
+                            <button type="submit" class="status-badge status-approved"
+                                    style="cursor:pointer; margin:0; font-size: 0.85rem; font-weight: 600;">
                                 Подати
                             </button>
                         </form>
+
                     {% elif app.status == "submitted" %}
-                        <form action="{{ url_for('cancel_application', application_id=app.id) }}" method="post" style="display:inline;">
+                        <form action="{{ url_for('cancel_application', application_id=app.id) }}"
+                                method="post" style="margin:0;">
                             <button type="submit" class="status-badge status-rejected"
                                     style="cursor:pointer; margin:0; font-size: 0.85rem; font-weight: 600;"
                                     onclick="return confirm('Ви впевнені, що хочете скасувати цю заявку?');">
