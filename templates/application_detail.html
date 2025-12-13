@@ -71,7 +71,7 @@
 {% endif %}
 
 <h2>Опис</h2>
-<p style="white-space: pre-wrap;">{{ application.short_description }}</p>
+<p class="description-content">{{ application.short_description }}</p>
 
 <hr>
 
@@ -124,22 +124,18 @@
         modal.style.display = "block";
         modalBody.innerHTML = "";
 
-        // Списки форматів
         const nativeImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
         const nativeIframe = ['pdf', 'txt', 'mp4', 'webm', 'mp3'];
         const officeTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
 
         if (nativeImage.includes(ext)) {
-            // КАРТИНКИ
             var img = document.createElement("img");
             img.src = url;
             img.style.maxWidth = "100%";
             img.style.maxHeight = "100%";
             img.style.objectFit = "contain";
             modalBody.appendChild(img);
-        }
-        else if (nativeIframe.includes(ext)) {
-            // PDF, TXT
+        } else if (nativeIframe.includes(ext)) {
             var iframe = document.createElement("iframe");
             iframe.src = url;
             iframe.style.width = "100%";
@@ -147,46 +143,31 @@
             iframe.style.border = "none";
             iframe.style.backgroundColor = "#fff";
             modalBody.appendChild(iframe);
-        }
-        else if (officeTypes.includes(ext)) {
-            // --- MICROSOFT OFFICE WEB VIEWER ---
+        } else if (officeTypes.includes(ext)) {
+            var fullUrl = window.location.origin + url;
+            var iframe = document.createElement("iframe");
+            iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);
+            iframe.style.width = "100%";
+            iframe.style.height = "100%";
+            iframe.style.border = "none";
+            iframe.style.backgroundColor = "#fff";
+            modalBody.appendChild(iframe);
 
-            // Якщо це локальний файл (ще не завантажений на сервер), перегляд неможливий
-            if (url.startsWith('blob:')) {
-                 modalBody.innerHTML = "<div style='color:white; text-align:center; padding: 20px;'>Попередній перегляд Office-файлів доступний тільки після збереження заявки (завантаження на сервер).</div>";
-            } else {
-                var fullUrl = window.location.origin + url;
-                var iframe = document.createElement("iframe");
+            var btn = document.createElement("a");
+            btn.href = url;
+            btn.download = "";
+            btn.innerText = "⬇ Завантажити копію";
+            btn.className = "action-btn-unified btn-green";
+            btn.style.cssText = "position: absolute; bottom: 20px; right: 20px; z-index: 10005; box-shadow: 0 0 10px rgba(0,0,0,0.5);";
+            modalBody.appendChild(btn);
 
-                // Використовуємо сервіс Microsoft
-                iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);
-
-                iframe.style.width = "100%";
-                iframe.style.height = "100%";
-                iframe.style.border = "none";
-                iframe.style.backgroundColor = "#fff";
-                modalBody.appendChild(iframe);
-
-                // Кнопка завантаження як резерв
-                var btn = document.createElement("a");
-                btn.href = url;
-                btn.download = "";
-                btn.innerText = "⬇ Завантажити копію";
-                btn.className = "action-btn-unified btn-green";
-                btn.style.cssText = "position: absolute; bottom: 20px; right: 20px; z-index: 10005; box-shadow: 0 0 10px rgba(0,0,0,0.5);";
-                modalBody.appendChild(btn);
-
-                // Попередження для Localhost
-                if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
-                    var warning = document.createElement("div");
-                    warning.innerText = "⚠️ На localhost перегляд Office-файлів не працює. Потрібен публічний тунель (ssh/ngrok).";
-                    warning.style.cssText = "position:absolute; top:10px; left:50%; transform:translateX(-50%); background:orange; padding:10px; z-index:10002; color:black;";
-                    modalBody.appendChild(warning);
-                }
+            if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+                var warning = document.createElement("div");
+                warning.innerText = "⚠️ На localhost перегляд Office-файлів не працює.";
+                warning.style.cssText = "position:absolute; top:10px; left:50%; transform:translateX(-50%); background:orange; padding:10px; z-index:10002; color:black;";
+                modalBody.appendChild(warning);
             }
-        }
-        else {
-            // НЕВІДОМІ ФОРМАТИ
+        } else {
             modalBody.innerHTML = `
                 <div style="text-align: center; color: #e0e0e0;">
                     <div style="font-size: 5rem; margin-bottom: 20px;">📄</div>

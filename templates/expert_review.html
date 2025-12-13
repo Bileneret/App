@@ -6,7 +6,7 @@
 
 <div style="background: var(--bg-body); padding: 15px; border-radius: 6px; border: 1px solid var(--border);">
     <h3>{{ application.title }}</h3>
-    <p style="white-space: pre-wrap;">{{ application.short_description }}</p>
+    <p class="description-content">{{ application.short_description }}</p>
     <p><small>Автор: {{ application.owner.email }}</small></p>
 </div>
 
@@ -102,7 +102,6 @@
             iframe.style.backgroundColor = "#fff";
             modalBody.appendChild(iframe);
         } else if (officeTypes.includes(ext)) {
-            // MICROSOFT OFFICE VIEWER
             var fullUrl = window.location.origin + url;
             var iframe = document.createElement("iframe");
             iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);

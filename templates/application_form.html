@@ -16,8 +16,9 @@
            value="{{ title_value or '' }}">
 
     <label for="short_description">Короткий опис</label>
-    <textarea id="short_description" name="short_description" rows="6" required
-              style="width:100%; padding:8px; border-radius:4px; border:1px solid #d1d5db;">{{ description_value or '' }}</textarea>
+    <textarea id="short_description" name="short_description" rows="1" required
+              class="auto-expand"
+              style="width:100%; padding:10px; border-radius:4px; border:1px solid #333; background: #2d2d2d; color: white;">{{ description_value or '' }}</textarea>
 
     {% if application and application.files %}
         <label>Вже прикріплені файли:</label>
@@ -72,6 +73,25 @@
 </div>
 
 <script>
+    // --- АВТО-РОЗШИРЕННЯ TEXTAREA ---
+    const textarea = document.getElementById('short_description');
+
+    function autoResize() {
+        this.style.height = 'auto'; // Скидаємо висоту
+        this.style.height = this.scrollHeight + 'px'; // Встановлюємо по контенту
+    }
+
+    if (textarea) {
+        textarea.setAttribute('style', 'height:' + (textarea.scrollHeight) + 'px;overflow-y:hidden;');
+        textarea.addEventListener("input", autoResize, false);
+        // Викликаємо один раз при завантаженні (для режиму редагування)
+        setTimeout(() => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }, 100);
+    }
+
+    // --- Логіка файлів (стара) ---
     let selectedFiles = [];
     const MAX_FILES = 10;
 
@@ -165,7 +185,6 @@
             iframe.style.backgroundColor = "#fff";
             modalBody.appendChild(iframe);
         } else if (officeTypes.includes(ext)) {
-            // MICROSOFT OFFICE VIEWER
             if (url.startsWith('blob:')) {
                  modalBody.innerHTML = "<div style='color:white; text-align:center; padding: 20px;'>Попередній перегляд Office-файлів доступний тільки після збереження заявки.</div>";
             } else {
