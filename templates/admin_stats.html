@@ -26,23 +26,23 @@
     </thead>
     <tbody>
         <tr>
-            <td><span class="status-badge status-submitted">На розгляді</span></td>
+            <td><span class="status-badge status-submitted">⏳ На розгляді</span></td>
             <td>{{ stats.get('submitted', 0) }}</td>
         </tr>
         <tr>
-            <td><span class="status-badge status-needs-changes">Потребує змін</span></td>
+            <td><span class="status-badge status-needs-changes">⚠️ Потребує змін</span></td>
             <td>{{ stats.get('needs_changes', 0) }}</td>
         </tr>
         <tr>
-            <td><span class="status-badge status-approved">Схвалено</span></td>
+            <td><span class="status-badge status-approved">✅ Схвалено</span></td>
             <td>{{ stats.get('approved', 0) }}</td>
         </tr>
         <tr>
-            <td><span class="status-badge status-rejected">Відхилено</span></td>
+            <td><span class="status-badge status-rejected">❌ Відхилено</span></td>
             <td>{{ stats.get('rejected', 0) }}</td>
         </tr>
         <tr>
-            <td><span class="status-badge status-cancelled">Скасовано</span></td>
+            <td><span class="status-badge status-cancelled">🚫 Скасовано</span></td>
             <td>{{ stats.get('cancelled', 0) }}</td>
         </tr>
     </tbody>

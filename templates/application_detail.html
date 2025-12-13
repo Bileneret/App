@@ -8,20 +8,21 @@
     <p><strong>Назва:</strong> {{ application.title }}</p>
     <div style="margin: 10px 0; display: flex; align-items: center; gap: 10px;">
         <strong>Статус:</strong>
+
         {% if application.status == 'draft' %}
-            <span class="status-badge status-draft">Чорнетка</span>
+            <span class="status-badge status-draft">📝 Чернетка</span>
         {% elif application.status == 'submitted' %}
-            <span class="status-badge status-submitted">На розгляді</span>
+            <span class="status-badge status-submitted">⏳ На розгляді</span>
         {% elif application.status == 'needs_changes' %}
-            <span class="status-badge status-needs-changes">Потребує змін</span>
+            <span class="status-badge status-needs-changes">⚠️ Потребує змін</span>
         {% elif application.status == 'approved' %}
-            <span class="status-badge status-approved">Схвалено</span>
+            <span class="status-badge status-approved">✅ Схвалено</span>
         {% elif application.status == 'rejected' %}
-            <span class="status-badge status-rejected">Відхилено</span>
+            <span class="status-badge status-rejected">❌ Відхилено</span>
         {% elif application.status == 'cancelled' %}
-            <span class="status-badge status-cancelled">Скасовано</span>
+            <span class="status-badge status-cancelled">🚫 Скасовано</span>
         {% else %}
-            {{ application.status }}
+            <span class="status-badge">{{ application.status }}</span>
         {% endif %}
     </div>
     <p><strong>Створено:</strong> {{ application.created_at.strftime('%Y-%m-%d') }}</p>
@@ -40,14 +41,13 @@
                         <div class="file-icon">📄</div>
                     {% endif %}
                 </div>
-
                 <div class="file-info">
                     <span class="file-name" title="{{ f.filename }}">{{ f.filename }}</span>
                     <div class="file-actions">
-                        <button type="button" class="icon-btn" onclick="openPreview('{{ url_for('download_file', filename=f.filename) }}', '{{ ext }}')" title="Переглянути">
+                        <button type="button" class="icon-btn" onclick="openPreview('{{ url_for('download_file', filename=f.filename) }}', '{{ ext }}')">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </button>
-                        <a href="{{ url_for('download_file', filename=f.filename) }}" class="icon-btn" title="Завантажити" download>
+                        <a href="{{ url_for('download_file', filename=f.filename) }}" class="icon-btn" download>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M12 9.75l-3 3m0 0l3 3m-3-3l-3 3M12 9.75V3" /></svg>
                         </a>
                     </div>
@@ -93,7 +93,15 @@
 
                     <div class="timeline-content">
                         {% if event.snapshot_status %}
-                            <p style="margin: 5px 0;"><strong>Статус:</strong> {{ event.snapshot_status }}</p>
+                            <p style="margin: 5px 0;"><strong>Статус:</strong>
+                            {% if event.snapshot_status == 'approved' %}✅ Схвалено
+                            {% elif event.snapshot_status == 'rejected' %}❌ Відхилено
+                            {% elif event.snapshot_status == 'needs_changes' %}⚠️ Потребує змін
+                            {% elif event.snapshot_status == 'submitted' %}⏳ На розгляді
+                            {% elif event.snapshot_status == 'draft' %}📝 Чернетка
+                            {% elif event.snapshot_status == 'cancelled' %}🚫 Скасовано
+                            {% else %}{{ event.snapshot_status }}{% endif %}
+                            </p>
                         {% endif %}
 
                         {% if event.snapshot_comment %}
@@ -150,56 +158,29 @@
 
 <div id="previewModal" class="modal">
     <span class="close-modal" onclick="closeModal()">&times;</span>
-    <div class="modal-content">
-        <div id="modalBody"></div>
-    </div>
+    <div class="modal-content"><div id="modalBody"></div></div>
 </div>
-
 <script>
     var modal = document.getElementById("previewModal");
     var modalBody = document.getElementById("modalBody");
-
     function openPreview(url, ext) {
         modal.style.display = "block";
         modalBody.innerHTML = "";
-
         const nativeImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
         const nativeIframe = ['pdf', 'txt', 'mp4', 'webm', 'mp3'];
         const officeTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
-
         if (nativeImage.includes(ext)) {
-            var img = document.createElement("img");
-            img.src = url;
-            img.style.maxWidth = "100%";
-            img.style.maxHeight = "100%";
-            img.style.objectFit = "contain";
-            modalBody.appendChild(img);
+            modalBody.innerHTML = '<img src="'+url+'" style="max-width:100%; max-height:100%; object-fit:contain;">';
         } else if (nativeIframe.includes(ext)) {
-            var iframe = document.createElement("iframe");
-            iframe.src = url;
-            iframe.style.width = "100%";
-            iframe.style.height = "100%";
-            iframe.style.border = "none";
-            iframe.style.backgroundColor = "#fff";
-            modalBody.appendChild(iframe);
+            modalBody.innerHTML = '<iframe src="'+url+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';
         } else if (officeTypes.includes(ext)) {
             if (url.startsWith('blob:')) {
                  modalBody.innerHTML = "<div style='color:white; text-align:center; padding: 20px;'>Збережіть заявку для перегляду.</div>";
             } else {
                 var fullUrl = window.location.origin + url;
-                var iframe = document.createElement("iframe");
-                iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);
-                iframe.style.width = "100%";
-                iframe.style.height = "100%";
-                iframe.style.border = "none";
-                iframe.style.backgroundColor = "#fff";
-                modalBody.appendChild(iframe);
-
+                modalBody.innerHTML = '<iframe src="https://view.officeapps.live.com/op/embed.aspx?src='+encodeURIComponent(fullUrl)+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';
                 var btn = document.createElement("a");
-                btn.href = url;
-                btn.download = "";
-                btn.innerText = "⬇ Завантажити копію";
-                btn.className = "action-btn-unified btn-green";
+                btn.href = url; btn.download = ""; btn.innerText = "⬇ Завантажити"; btn.className = "action-btn-unified btn-green";
                 btn.style.cssText = "position: absolute; bottom: 20px; right: 20px; z-index: 10005;";
                 modalBody.appendChild(btn);
             }
@@ -207,16 +188,7 @@
             modalBody.innerHTML = "<div style='color:white; text-align:center;'>Перегляд недоступний. <a href='"+url+"' class='action-btn-unified btn-green'>Завантажити</a></div>";
         }
     }
-
-    function closeModal() {
-        modal.style.display = "none";
-        modalBody.innerHTML = "";
-    }
-
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
+    function closeModal() { modal.style.display = "none"; modalBody.innerHTML = ""; }
+    window.onclick = function(event) { if (event.target == modal) closeModal(); }
 </script>
 {% endblock %}

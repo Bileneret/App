@@ -5,7 +5,22 @@
 <h1>Розгляд заявки №{{ application.id }}</h1>
 
 <div style="background: var(--bg-body); padding: 15px; border-radius: 6px; border: 1px solid var(--border);">
-    <h3>{{ application.title }}</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>{{ application.title }}</h3>
+        <div>
+            {% if application.status == 'submitted' %}
+                <span class="status-badge status-submitted">⏳ На розгляді</span>
+            {% elif application.status == 'needs_changes' %}
+                <span class="status-badge status-needs-changes">⚠️ Потребує змін</span>
+            {% elif application.status == 'approved' %}
+                <span class="status-badge status-approved">✅ Схвалено</span>
+            {% elif application.status == 'rejected' %}
+                <span class="status-badge status-rejected">❌ Відхилено</span>
+            {% else %}
+                <span class="status-badge">{{ application.status }}</span>
+            {% endif %}
+        </div>
+    </div>
     <p class="description-content">{{ application.short_description }}</p>
     <p><small>Автор: {{ application.owner.email }}</small></p>
 </div>
@@ -41,7 +56,6 @@
 
 <hr style="margin: 40px 0; border-top: 1px solid var(--border);">
 <h3>Історія змін та коментарів</h3>
-
 <div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border); padding: 20px;">
     {% if application.history %}
         <div class="timeline">
@@ -62,7 +76,15 @@
                     </div>
                     <div class="timeline-content">
                         {% if event.snapshot_status %}
-                            <p style="margin: 5px 0;"><strong>Статус:</strong> {{ event.snapshot_status }}</p>
+                            <p style="margin: 5px 0;"><strong>Статус:</strong>
+                            {% if event.snapshot_status == 'approved' %}✅ Схвалено
+                            {% elif event.snapshot_status == 'rejected' %}❌ Відхилено
+                            {% elif event.snapshot_status == 'needs_changes' %}⚠️ Потребує змін
+                            {% elif event.snapshot_status == 'submitted' %}⏳ На розгляді
+                            {% elif event.snapshot_status == 'draft' %}📝 Чернетка
+                            {% elif event.snapshot_status == 'cancelled' %}🚫 Скасовано
+                            {% else %}{{ event.snapshot_status }}{% endif %}
+                            </p>
                         {% endif %}
                         {% if event.snapshot_comment %}
                             <div style="margin-top: 10px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; color: #e0e0e0;">
@@ -121,7 +143,7 @@
             modalBody.innerHTML = '<iframe src="'+url+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';
         } else if (officeTypes.includes(ext)) {
             if (url.startsWith('blob:')) {
-                 modalBody.innerHTML = "<div style='color:white; text-align:center; padding: 20px;'>Збережіть заявку.</div>";
+                 modalBody.innerHTML = "<div style='color:white; text-align:center; padding: 20px;'>Збережіть заявку для перегляду.</div>";
             } else {
                 var fullUrl = window.location.origin + url;
                 modalBody.innerHTML = '<iframe src="https://view.officeapps.live.com/op/embed.aspx?src='+encodeURIComponent(fullUrl)+'" style="width:100%; height:100%; border:none; background:#fff;"></iframe>';

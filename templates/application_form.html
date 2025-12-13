@@ -63,47 +63,62 @@
     <hr style="margin: 40px 0; border-top: 1px solid var(--border);">
     <h3>Історія змін та коментарів</h3>
 
-    <div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border); padding: 20px;">
-        {% if application.history %}
-            <div class="timeline">
-                {% for event in application.history %}
-                    <div class="timeline-item">
-                        <div class="timeline-header">
-                            <span class="timeline-date">{{ event.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+    {% if application.history %}
+        <div class="timeline">
+            {% for event in application.history %}
+                <div class="timeline-item">
+                    <div class="timeline-header">
+                        <span class="timeline-date">{{ event.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
 
-                            {% if event.event_type == 'created' %}
-                                <span class="status-badge" style="background:#333; border:1px solid #555;">Створено</span>
-                            {% elif event.event_type == 'edited' %}
-                                <span class="status-badge" style="background:#0c4a6e; border:1px solid #0ea5e9; color:#bae6fd;">Відредаговано</span>
-                            {% elif event.event_type == 'status_change' %}
-                                <span class="status-badge" style="background:#4c1d95; border:1px solid #8b5cf6; color:#ddd6fe;">Зміна статусу</span>
-                            {% endif %}
+                        {% if event.event_type == 'created' %}
+                            <span class="status-badge" style="background:#333; border:1px solid #555;">Створено</span>
+                        {% elif event.event_type == 'edited' %}
+                            <span class="status-badge" style="background:#0c4a6e; border:1px solid #0ea5e9; color:#bae6fd;">Відредаговано</span>
+                        {% elif event.event_type == 'status_change' %}
+                            <span class="status-badge" style="background:#4c1d95; border:1px solid #8b5cf6; color:#ddd6fe;">Зміна статусу</span>
+                        {% endif %}
 
-                            <span style="margin-left: 10px; color: var(--text-muted); font-size: 0.9rem;">
-                                Ким: {{ event.changed_by.email }} ({{ event.changed_by.role }})
-                            </span>
-                        </div>
-
-                        <div class="timeline-content">
-                            {% if event.snapshot_status %}
-                                <p style="margin: 5px 0;"><strong>Статус:</strong> {{ event.snapshot_status }}</p>
-                            {% endif %}
-
-                            {% if event.snapshot_comment %}
-                                <div style="margin-top: 10px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; color: #e0e0e0;">
-                                    <strong>Коментар:</strong><br>
-                                    {{ event.snapshot_comment }}
-                                </div>
-                            {% endif %}
-                        </div>
+                        <span style="margin-left: 10px; color: var(--text-muted); font-size: 0.9rem;">
+                            Ким: {{ event.changed_by.email }} ({{ event.changed_by.role }})
+                        </span>
                     </div>
-                    {% if not loop.last %}<hr style="border-top: 1px dashed #333; margin: 15px 0;">{% endif %}
-                {% endfor %}
-            </div>
-        {% else %}
-            <p style="color: var(--text-muted);">Історія змін відсутня.</p>
-        {% endif %}
-    </div>
+
+                    <div class="timeline-content">
+                        {% if event.snapshot_status %}
+                            <div style="margin: 5px 0;">
+                                <strong>Статус:</strong>
+                                {% if event.snapshot_status == 'draft' %}
+                                    <span class="status-badge status-draft">📝 Чернетка</span>
+                                {% elif event.snapshot_status == 'submitted' %}
+                                    <span class="status-badge status-submitted">⏳ На розгляді</span>
+                                {% elif event.snapshot_status == 'needs_changes' %}
+                                    <span class="status-badge status-needs-changes">⚠️ Потребує змін</span>
+                                {% elif event.snapshot_status == 'approved' %}
+                                    <span class="status-badge status-approved">✅ Схвалено</span>
+                                {% elif event.snapshot_status == 'rejected' %}
+                                    <span class="status-badge status-rejected">❌ Відхилено</span>
+                                {% elif event.snapshot_status == 'cancelled' %}
+                                    <span class="status-badge status-cancelled">🚫 Скасовано</span>
+                                {% else %}
+                                    <span class="status-badge">{{ event.snapshot_status }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        {% if event.snapshot_comment %}
+                            <div style="margin-top: 10px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; color: #e0e0e0;">
+                                <strong>Коментар:</strong><br>
+                                {{ event.snapshot_comment }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not loop.last %}<hr style="border-top: 1px dashed #333; margin: 15px 0;">{% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: var(--text-muted);">Історія змін відсутня.</p>
+    {% endif %}
 {% endif %}
 
 <p style="margin-top: 20px;">
@@ -205,7 +220,6 @@
         }
     }
 
-    // --- МОДАЛЬНЕ ВІКНО ---
     var modal = document.getElementById("previewModal");
     var modalBody = document.getElementById("modalBody");
 

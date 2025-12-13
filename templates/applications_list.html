@@ -28,19 +28,19 @@
                 <td>{{ app.title }}</td>
                 <td>
                     {% if app.status == 'draft' %}
-                        <span class="status-badge status-draft">Чорнетка</span>
+                        <span class="status-badge status-draft">📝 Чернетка</span>
                     {% elif app.status == 'submitted' %}
-                        <span class="status-badge status-submitted">На розгляді</span>
+                        <span class="status-badge status-submitted">⏳ На розгляді</span>
                     {% elif app.status == 'needs_changes' %}
-                        <span class="status-badge status-needs-changes">Потребує змін</span>
+                        <span class="status-badge status-needs-changes">⚠️ Потребує змін</span>
                     {% elif app.status == 'approved' %}
-                        <span class="status-badge status-approved">Схвалено</span>
+                        <span class="status-badge status-approved">✅ Схвалено</span>
                     {% elif app.status == 'rejected' %}
-                        <span class="status-badge status-rejected">Відхилено</span>
+                        <span class="status-badge status-rejected">❌ Відхилено</span>
                     {% elif app.status == 'cancelled' %}
-                        <span class="status-badge status-cancelled">Скасовано</span>
+                        <span class="status-badge status-cancelled">🚫 Скасовано</span>
                     {% else %}
-                        {{ app.status }}
+                        <span class="status-badge">{{ app.status }}</span>
                     {% endif %}
                 </td>
                 <td>{{ app.created_at.strftime('%Y-%m-%d') }}</td>
@@ -60,7 +60,7 @@
                         <form action="{{ url_for('submit_application', application_id=app.id) }}"
                                 method="post" style="margin:0;">
                             <button type="submit" class="action-btn-unified btn-green"
-                                    onclick="return confirm('Ви впевнені, що хочете подати цю заявку? Після подачі ви не зможете її редагувати.');">
+                                    onclick="return confirm('Ви впевнені, що хочете подати цю заявку?');">
                                 Подати
                             </button>
                         </form>
