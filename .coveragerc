@@ -1,0 +1,9 @@
+[run]
+source = .
+omit =
+    tests/*
+    seed.py
+    migrations/*
+    venv/*
+    .venv/*
+    .venv1/*
