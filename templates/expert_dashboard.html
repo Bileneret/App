@@ -18,7 +18,7 @@
         </thead>
         <tbody>
         {% for app in applications %}
-            <tr style="border-top: 1px solid #e5e7eb;">
+            <tr>
                 <td>{{ app.id }}</td>
                 <td>{{ app.title }}</td>
                 <td>{{ app.owner.email }}</td>
@@ -31,7 +31,10 @@
                 </td>
                 <td>{{ app.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                 <td>
-                    <a href="{{ url_for('expert_review', application_id=app.id) }}">Розглянути</a>
+                    <a href="{{ url_for('expert_review', application_id=app.id) }}"
+                       class="action-btn-unified btn-blue">
+                       Розглянути
+                    </a>
                 </td>
             </tr>
         {% endfor %}

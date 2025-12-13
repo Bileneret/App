@@ -5,9 +5,9 @@
     --bg-input: #2d2d2d;
     --text-main: #e0e0e0;
     --text-muted: #a0a0a0;
-    --primary: #3b82f6;
+    --primary: #3b82f6;       /* Синій */
     --primary-hover: #2563eb;
-    --danger: #ef4444;
+    --danger: #ef4444;        /* Червоний */
     --danger-hover: #dc2626;
     --border: #333333;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
@@ -28,6 +28,7 @@ body {
     line-height: 1.6;
 }
 
+/* --- Хедер та Навігація --- */
 header {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
@@ -62,6 +63,7 @@ nav a:hover {
     color: var(--primary);
 }
 
+/* --- Основний контент --- */
 main {
     flex: 1;
     width: 100%;
@@ -129,7 +131,7 @@ form input:focus, form textarea:focus {
     border-color: var(--primary);
 }
 
-/* --- Кнопки --- */
+/* --- Стандартні кнопки --- */
 button {
     margin-top: 1.5rem;
     padding: 10px 20px;
@@ -146,14 +148,6 @@ button {
 
 button:hover {
     background: var(--primary-hover);
-}
-
-button[style*="b91c1c"] {
-    background: var(--danger) !important;
-}
-
-button[style*="b91c1c"]:hover {
-    background: var(--danger-hover) !important;
 }
 
 /* --- Таблиці --- */
@@ -226,32 +220,37 @@ footer {
     justify-content: center;
     align-items: center;
 
-    /* Єдиний розмір шрифту та відступи */
     font-size: 0.9rem !important;
     padding: 6px 12px !important;
     font-weight: 600 !important;
 
-    /* Фіксована мінімальна ширина для однаковості */
     min-width: 120px;
 
     border-radius: 50px;
     border: 1px solid transparent;
     cursor: pointer;
     text-decoration: none !important;
-    transition: opacity 0.2s;
+    transition: background-color 0.2s, color 0.2s;
     margin: 0 !important;
     line-height: 1.5;
 }
 
-.action-btn-unified:hover {
-    opacity: 0.9;
-}
+/* Кольори кнопок + HOVER ЕФЕКТИ */
+/* Синя */
+.btn-blue { background-color: #172554; color: #93c5fd; border-color: #1e40af; }
+.btn-blue:hover, button.btn-blue:hover { background-color: #1e3a8a; color: #bfdbfe; }
 
-/* Копіюємо кольори зі статусів для кнопок */
-.btn-blue   { background-color: #172554; color: #93c5fd; border-color: #1e40af; }
+/* Жовта */
 .btn-yellow { background-color: #451a03; color: #fcd34d; border-color: #b45309; }
-.btn-green  { background-color: #064e3b; color: #6ee7b7; border-color: #059669; }
-.btn-red    { background-color: #450a0a; color: #fca5a5; border-color: #b91c1c; }
+.btn-yellow:hover, button.btn-yellow:hover { background-color: #78350f; color: #fde68a; }
+
+/* Зелена */
+.btn-green { background-color: #064e3b; color: #6ee7b7; border-color: #059669; }
+.btn-green:hover, button.btn-green:hover { background-color: #065f46; color: #a7f3d0; }
+
+/* Червона */
+.btn-red { background-color: #450a0a; color: #fca5a5; border-color: #b91c1c; }
+.btn-red:hover, button.btn-red:hover { background-color: #7f1d1d; color: #fecaca; }
 
 
 /* --- Кнопка "Показати пароль" --- */
