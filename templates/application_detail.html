@@ -8,7 +8,6 @@
     <p><strong>Назва:</strong> {{ application.title }}</p>
     <div style="margin: 10px 0; display: flex; align-items: center; gap: 10px;">
         <strong>Статус:</strong>
-
         {% if application.status == 'draft' %}
             <span class="status-badge status-draft">Чорнетка</span>
         {% elif application.status == 'submitted' %}
@@ -28,8 +27,44 @@
     <p><strong>Створено:</strong> {{ application.created_at.strftime('%Y-%m-%d') }}</p>
 </div>
 
+{% if application.files %}
+    <h3 style="margin-top: 30px;">Прикріплені файли</h3>
+    <div class="file-gallery">
+        {% for f in application.files %}
+            {% set ext = f.filename.split('.')[-1].lower() %}
+            <div class="file-card">
+                <div class="file-preview">
+                    {% if ext in ['png', 'jpg', 'jpeg', 'gif'] %}
+                        <img src="{{ url_for('download_file', filename=f.filename) }}" alt="Preview">
+                    {% else %}
+                        <div class="file-icon">📄</div>
+                    {% endif %}
+                </div>
+
+                <div class="file-info">
+                    <span class="file-name" title="{{ f.filename }}">{{ f.filename }}</span>
+                    <div class="file-actions">
+                        <button type="button" class="icon-btn" onclick="openPreview('{{ url_for('download_file', filename=f.filename) }}', '{{ ext }}')" title="Переглянути">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+
+                        <a href="{{ url_for('download_file', filename=f.filename) }}" class="icon-btn" title="Завантажити" download>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M12 9.75l-3 3m0 0l3 3m-3-3l-3 3M12 9.75V3" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
 {% if application.expert_comment %}
-    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--primary); padding: 15px; border-radius: 6px; margin: 20px 0;">
         <h3 style="color: var(--primary); margin-top: 0;">Коментар експерта:</h3>
         <p style="white-space: pre-wrap; margin-bottom: 0;">{{ application.expert_comment }}</p>
     </div>
@@ -43,7 +78,7 @@
 {% if g.user.id == application.owner_id %}
     {% if application.status in ("draft", "needs_changes") %}
         <p>
-            <a href="{{ url_for('edit_application', application_id=application.id) }}">Редагувати</a>
+            <a href="{{ url_for('edit_application', application_id=application.id) }}">Редагувати / Додати файли</a>
         </p>
         <form action="{{ url_for('submit_application', application_id=application.id) }}" method="post">
             <button type="submit">Подати на розгляд</button>
@@ -57,11 +92,60 @@
 
     {% elif application.status == "approved" %}
         <p style="color: var(--text-muted);">Вітаємо! Вашу заявку схвалено.</p>
-
     {% endif %}
 {% endif %}
 
 <p>
     <a href="{{ url_for('my_applications') }}">Повернутися до списку</a>
 </p>
+
+<div id="previewModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div id="modalBody">
+            </div>
+    </div>
+</div>
+
+<script>
+    var modal = document.getElementById("previewModal");
+    var modalBody = document.getElementById("modalBody");
+
+    function openPreview(url, ext) {
+        modal.style.display = "block";
+        modalBody.innerHTML = ""; // Очищаємо попереднє
+
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+            // Картинка
+            var img = document.createElement("img");
+            img.src = url;
+            img.style.maxWidth = "100%";
+            img.style.maxHeight = "80vh";
+            modalBody.appendChild(img);
+        } else if (['pdf', 'txt'].includes(ext)) {
+            // PDF або текст (в iframe)
+            var iframe = document.createElement("iframe");
+            iframe.src = url;
+            iframe.style.width = "100%";
+            iframe.style.height = "80vh";
+            iframe.style.border = "none";
+            modalBody.appendChild(iframe);
+        } else {
+            // Інші файли
+            modalBody.innerHTML = "<p style='color:white; text-align:center; padding: 50px;'>Перегляд цього типу файлу не підтримується в браузері.<br>Будь ласка, завантажте його.</p>";
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+        modalBody.innerHTML = ""; // Очищаємо, щоб зупинити відео/iframe
+    }
+
+    // Закриття при кліку за межами вікна
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
 {% endblock %}

@@ -10,7 +10,7 @@
 {% block content %}
 <h1>{{ page_title }}</h1>
 
-<form method="post">
+<form method="post" enctype="multipart/form-data" id="appForm">
     <label for="title">Назва заявки</label>
     <input type="text" id="title" name="title" required
            value="{{ title_value or '' }}">
@@ -18,6 +18,38 @@
     <label for="short_description">Короткий опис</label>
     <textarea id="short_description" name="short_description" rows="6" required
               style="width:100%; padding:8px; border-radius:4px; border:1px solid #d1d5db;">{{ description_value or '' }}</textarea>
+
+    {% if application and application.files %}
+        <label>Вже прикріплені файли:</label>
+        <ul class="file-upload-list" style="margin-bottom: 20px;">
+            {% for f in application.files %}
+                {% set ext = f.filename.split('.')[-1].lower() %}
+                <li class="file-upload-item">
+                    <span class="file-upload-name">✅ {{ f.filename }}</span>
+                    <div class="file-upload-actions">
+                        <button type="button" class="action-btn" title="Переглянути"
+                                onclick="openPreview('{{ url_for('download_file', filename=f.filename) }}', '{{ ext }}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </button>
+
+                        <button type="button" class="action-btn delete" title="Видалити"
+                                onclick="deleteServerFile('{{ url_for('delete_file_route', file_id=f.id) }}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <label>Додати нові файли (Ліміт: до 10 файлів сумарно та не більше 100МБ)</label>
+
+    <label for="files" class="custom-file-upload">
+        📂 Обрати файли...
+    </label>
+    <input type="file" id="files" name="files" multiple onchange="handleFileSelect(event)">
+
+    <ul id="newFileList" class="file-upload-list" style="display: none;"></ul>
 
     <button type="submit">
         {% if mode == "create" %}Створити{% else %}Зберегти{% endif %}
@@ -27,4 +59,143 @@
 <p>
     <a href="{{ url_for('my_applications') }}">Повернутися до списку заявок</a>
 </p>
+
+<form id="deleteFileForm" method="post" style="display:none;"></form>
+
+<div id="previewModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    // --- ЗМІННІ ---
+    // Зберігаємо всі вибрані файли в масиві, щоб можна було видаляти окремо
+    let selectedFiles = [];
+    const MAX_FILES = 10;
+
+    // Враховуємо файли, які вже є на сервері (якщо це редагування)
+    const existingFilesCount = {{ application.files|length if application and application.files else 0 }};
+
+    // --- ФУНКЦІЇ ДЛЯ НОВИХ ФАЙЛІВ ---
+
+    function handleFileSelect(event) {
+        const input = event.target;
+        if (!input.files || input.files.length === 0) return;
+
+        // Додаємо нові файли до нашого масиву
+        for (let i = 0; i < input.files.length; i++) {
+            selectedFiles.push(input.files[i]);
+        }
+
+        updateFileListUI();
+    }
+
+    function updateFileListUI() {
+        const listEl = document.getElementById('newFileList');
+        const input = document.getElementById('files');
+
+        // 1. Сортуємо по алфавіту
+        selectedFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+        // 2. Оновлюємо відображення
+        listEl.innerHTML = '';
+
+        if (selectedFiles.length > 0) {
+            listEl.style.display = 'block';
+
+            selectedFiles.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'file-upload-item';
+
+                // Визначаємо тип для прев'ю
+                const ext = file.name.split('.').pop().toLowerCase();
+
+                li.innerHTML = `
+                    <span class="file-upload-name">🆕 ${file.name}</span>
+                    <div class="file-upload-actions">
+                        <button type="button" class="action-btn" onclick="previewLocalFile(${index})">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </button>
+                        <button type="button" class="action-btn delete" onclick="removeLocalFile(${index})">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(li);
+            });
+        } else {
+            listEl.style.display = 'none';
+        }
+
+        // 3. Синхронізуємо масив з реальним input (через DataTransfer)
+        // Це магія, яка дозволяє відправити оновлений список файлів
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
+    }
+
+    function removeLocalFile(index) {
+        selectedFiles.splice(index, 1);
+        updateFileListUI();
+    }
+
+    function previewLocalFile(index) {
+        const file = selectedFiles[index];
+        const ext = file.name.split('.').pop().toLowerCase();
+
+        // Створюємо тимчасовий URL для файлу
+        const objectUrl = URL.createObjectURL(file);
+        openPreview(objectUrl, ext);
+    }
+
+    // --- ФУНКЦІЇ ДЛЯ СЕРВЕРНИХ ФАЙЛІВ ---
+
+    function deleteServerFile(url) {
+        if (confirm("Ви впевнені, що хочете видалити цей файл?")) {
+            const form = document.getElementById('deleteFileForm');
+            form.action = url;
+            form.submit();
+        }
+    }
+
+    // --- ФУНКЦІЇ МОДАЛЬНОГО ВІКНА (Спільні) ---
+
+    var modal = document.getElementById("previewModal");
+    var modalBody = document.getElementById("modalBody");
+
+    function openPreview(url, ext) {
+        modal.style.display = "block";
+        modalBody.innerHTML = "";
+
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+            var img = document.createElement("img");
+            img.src = url;
+            img.style.maxWidth = "100%";
+            img.style.maxHeight = "80vh";
+            modalBody.appendChild(img);
+        } else if (['pdf', 'txt'].includes(ext)) {
+            var iframe = document.createElement("iframe");
+            iframe.src = url;
+            iframe.style.width = "100%";
+            iframe.style.height = "80vh";
+            iframe.style.border = "none";
+            modalBody.appendChild(iframe);
+        } else {
+            modalBody.innerHTML = "<p style='color:white; text-align:center; padding: 50px;'>Перегляд недоступний для цього типу файлу.</p>";
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = "none";
+        modalBody.innerHTML = "";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
 {% endblock %}

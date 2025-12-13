@@ -5,9 +5,9 @@
     --bg-input: #2d2d2d;
     --text-main: #e0e0e0;
     --text-muted: #a0a0a0;
-    --primary: #3b82f6;
+    --primary: #3b82f6;       /* Синій */
     --primary-hover: #2563eb;
-    --danger: #ef4444;
+    --danger: #ef4444;        /* Червоний */
     --danger-hover: #dc2626;
     --border: #333333;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
@@ -28,6 +28,7 @@ body {
     line-height: 1.6;
 }
 
+/* --- Хедер та Навігація --- */
 header {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
@@ -62,6 +63,7 @@ nav a:hover {
     color: var(--primary);
 }
 
+/* --- Основний контент --- */
 main {
     flex: 1;
     width: 100%;
@@ -79,14 +81,31 @@ h1, h2, h3 {
     margin-top: 0;
 }
 
-h1 { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+h1 {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+}
 
-a { color: var(--primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
 
-hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+a:hover {
+    text-decoration: underline;
+}
 
-form { margin-top: 1rem; }
+hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+/* --- Форми --- */
+form {
+    margin-top: 1rem;
+}
 
 form label {
     display: block;
@@ -112,6 +131,7 @@ form input:focus, form textarea:focus {
     border-color: var(--primary);
 }
 
+/* --- Кнопки --- */
 button {
     margin-top: 1.5rem;
     padding: 10px 20px;
@@ -133,20 +153,35 @@ button:hover {
 button[style*="b91c1c"] {
     background: var(--danger) !important;
 }
+
 button[style*="b91c1c"]:hover {
     background: var(--danger-hover) !important;
 }
 
+/* --- Таблиці --- */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
 }
 
-th { text-align: left; color: var(--text-muted); border-bottom: 1px solid var(--border); padding: 10px; }
-td { border-bottom: 1px solid var(--border); padding: 12px 10px; }
-tr:last-child td { border-bottom: none; }
+th {
+    text-align: left;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+}
 
+td {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 10px;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Flash повідомлення --- */
 .flash {
     padding: 12px 16px;
     border-radius: 6px;
@@ -158,6 +193,7 @@ tr:last-child td { border-bottom: none; }
 .flash-warning { background: #451a03; color: #fde68a; border-left-color: #f59e0b; }
 .flash-info    { background: #0c4a6e; color: #bae6fd; border-left-color: #0ea5e9; }
 
+/* --- Футер --- */
 footer {
     background: var(--bg-card);
     border-top: 1px solid var(--border);
@@ -168,7 +204,7 @@ footer {
     font-size: 0.9rem;
 }
 
-/* Статуси */
+/* --- Статуси (Badges) --- */
 .status-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -178,6 +214,7 @@ footer {
     text-align: center;
     white-space: nowrap;
 }
+
 .status-draft { background-color: #3f3f46; color: #d4d4d8; border: 1px solid #52525b; }
 .status-submitted { background-color: #172554; color: #93c5fd; border: 1px solid #1e40af; }
 .status-needs-changes { background-color: #451a03; color: #fcd34d; border: 1px solid #b45309; }
@@ -194,14 +231,14 @@ footer {
 
 .password-wrapper input {
     width: 100%;
-    padding-right: 45px;
+    padding-right: 45px; /* Місце для кнопки */
 }
 
 .toggle-password-btn {
     position: absolute;
     right: 0;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%); /* Центрування по вертикалі */
 
     height: 100%;
     width: 40px;
@@ -212,7 +249,8 @@ footer {
     align-items: center;
     justify-content: center;
 
-    color: #ffffff !important; /* За замовчуванням біла */
+    /* Кнопка біла */
+    color: #ffffff !important;
     opacity: 1;
 
     padding: 0;
@@ -229,10 +267,217 @@ footer {
     height: 24px;
 }
 
-/* --- Fix for Browser Autofill (Виправлення для автозаповнення) --- */
-/* Цей селектор каже: якщо input має стан autofill (став білим),
-   то кнопку, яка стоїть одразу після нього (+), зробити чорною */
+/* Fix for Browser Autofill: Якщо фон стає білим, іконка стає чорною */
 input:-webkit-autofill + .toggle-password-btn {
     color: #000000 !important;
     opacity: 1 !important;
+}
+
+/* --- Завантаження файлів (Форма) --- */
+#files {
+    display: none; /* Ховаємо стандартний input */
+}
+
+.custom-file-upload {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #2d2d2d;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    transition: background 0.2s;
+}
+
+.custom-file-upload:hover {
+    background: #3d3d3d;
+    border-color: var(--text-muted);
+}
+
+/* Список нових/існуючих файлів у формі */
+.file-upload-list {
+    margin-top: 10px;
+    list-style: none;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-input);
+}
+
+.file-upload-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.file-upload-item:last-child {
+    border-bottom: none;
+}
+
+.file-upload-name {
+    flex: 1;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 15px;
+}
+
+.file-upload-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.action-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: color 0.2s;
+    margin: 0 !important;
+}
+
+.action-btn:hover {
+    color: var(--primary);
+}
+
+.action-btn.delete:hover {
+    color: var(--danger);
+}
+
+.action-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* --- Галерея файлів (Деталі заявки) --- */
+.file-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.file-card {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-preview {
+    height: 120px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.file-icon {
+    font-size: 3rem;
+    color: var(--text-muted);
+}
+
+.file-info {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.file-name {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-main);
+}
+
+.file-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 5px;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+}
+
+.icon-btn:hover {
+    color: var(--primary);
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* --- Модальне вікно --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    margin: 5% auto;
+    padding: 20px;
+    width: 80%;
+    max-width: 900px;
+    position: relative;
+    background: transparent;
+    text-align: center;
+}
+
+.close-modal {
+    color: #fff;
+    float: right;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 0;
+    top: -30px;
+    transition: color 0.2s;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: var(--danger);
+    text-decoration: none;
+    cursor: pointer;
 }

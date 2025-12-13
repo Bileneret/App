@@ -1,4 +1,5 @@
-from flask import Flask, g
+import os
+from flask import Flask, g, render_template, flash, redirect, url_for
 from extensions import db
 from helpers import get_current_user
 
@@ -17,7 +18,26 @@ app.config["SECRET_KEY"] = "change-me-in-production"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# Налаштування завантаження файлів
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+
+# ЗБІЛЬШЕНО ЛІМІТ: 100 МБ (щоб 23 файли могли "зайти" на сервер для обробки)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+
+# Створюємо папку для завантажень
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 db.init_app(app)
+
+# -----------------------
+# Обробка помилок (Error Handlers)
+# -----------------------
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    """Обробка помилки, коли файли занадто великі."""
+    flash("Загальний розмір файлів занадто великий! Спробуйте завантажити менше файлів.", "danger")
+    # Повертаємо користувача назад (на попередню сторінку або на список)
+    return redirect(url_for('my_applications'))
 
 # -----------------------
 # Реєстрація маршрутів
@@ -42,7 +62,7 @@ def load_logged_in_user():
 
 @app.cli.command("init-db")
 def init_db_command():
-    from models import User, PasswordResetToken, Application
+    from models import User, PasswordResetToken, Application, ApplicationFile
     with app.app_context():
         db.create_all()
     print("Базу даних ініціалізовано.")
@@ -50,7 +70,6 @@ def init_db_command():
 
 @app.cli.command("create-expert")
 def create_expert_command():
-    """Створює користувача-експерта."""
     from models import User
     with app.app_context():
         email = "expert@test.com"
@@ -65,7 +84,6 @@ def create_expert_command():
 
 @app.cli.command("create-admin")
 def create_admin_command():
-    """Створює звичайного адміністратора."""
     from models import User
     with app.app_context():
         email = "admin@test.com"
@@ -80,7 +98,6 @@ def create_admin_command():
 
 @app.cli.command("create-super-admin")
 def create_super_admin_command():
-    """Створює ГОЛОВНОГО адміністратора (може банити адмінів)."""
     from models import User
     with app.app_context():
         email = "super@test.com"
