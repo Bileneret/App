@@ -1,9 +1,9 @@
 [run]
 omit =
     tests/*
-    seed.py
     */__init__.py
     extensions.py
+    seed.py
 
 [report]
 precision = 2
