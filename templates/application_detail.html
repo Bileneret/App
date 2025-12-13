@@ -79,14 +79,13 @@
     {% if application.status in ("draft", "needs_changes") %}
         <div style="display: flex; gap: 10px; align-items: center; margin-top: 20px;">
             <a href="{{ url_for('edit_application', application_id=application.id) }}"
-               class="status-badge status-needs-changes"
-               style="text-decoration: none; padding: 10px 20px; font-size: 1rem;">
+               class="action-btn-unified btn-yellow">
                Редагувати / Файли
             </a>
 
             <form action="{{ url_for('submit_application', application_id=application.id) }}" method="post" style="margin: 0;">
-                <button type="submit" class="status-badge status-approved"
-                        style="cursor:pointer; margin: 0; padding: 10px 20px; font-size: 1rem;">
+                <button type="submit" class="action-btn-unified btn-green"
+                        onclick="return confirm('Ви впевнені, що хочете подати цю заявку? Після подачі ви не зможете її редагувати.');">
                     Подати на розгляд
                 </button>
             </form>
@@ -95,8 +94,7 @@
     {% elif application.status == "submitted" %}
         <p>Заявку подано. Очікуйте рішення експерта.</p>
         <form action="{{ url_for('cancel_application', application_id=application.id) }}" method="post">
-            <button type="submit" class="status-badge status-rejected"
-                    style="cursor:pointer; margin-top: 10px; padding: 10px 20px; font-size: 1rem;"
+            <button type="submit" class="action-btn-unified btn-red"
                     onclick="return confirm('Ви впевнені, що хочете скасувати цю заявку?');">
                 Скасувати заявку
             </button>

@@ -5,9 +5,9 @@
     --bg-input: #2d2d2d;
     --text-main: #e0e0e0;
     --text-muted: #a0a0a0;
-    --primary: #3b82f6;       /* Синій */
+    --primary: #3b82f6;
     --primary-hover: #2563eb;
-    --danger: #ef4444;        /* Червоний */
+    --danger: #ef4444;
     --danger-hover: #dc2626;
     --border: #333333;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
@@ -28,7 +28,6 @@ body {
     line-height: 1.6;
 }
 
-/* --- Хедер та Навігація --- */
 header {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
@@ -63,7 +62,6 @@ nav a:hover {
     color: var(--primary);
 }
 
-/* --- Основний контент --- */
 main {
     flex: 1;
     width: 100%;
@@ -222,6 +220,40 @@ footer {
 .status-rejected { background-color: #450a0a; color: #fca5a5; border: 1px solid #b91c1c; }
 .status-cancelled { background-color: #18181b; color: #a1a1aa; border: 1px solid #3f3f46; text-decoration: line-through; }
 
+/* --- Уніфіковані кнопки дій --- */
+.action-btn-unified {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    /* Єдиний розмір шрифту та відступи */
+    font-size: 0.9rem !important;
+    padding: 6px 12px !important;
+    font-weight: 600 !important;
+
+    /* Фіксована мінімальна ширина для однаковості */
+    min-width: 120px;
+
+    border-radius: 50px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: opacity 0.2s;
+    margin: 0 !important;
+    line-height: 1.5;
+}
+
+.action-btn-unified:hover {
+    opacity: 0.9;
+}
+
+/* Копіюємо кольори зі статусів для кнопок */
+.btn-blue   { background-color: #172554; color: #93c5fd; border-color: #1e40af; }
+.btn-yellow { background-color: #451a03; color: #fcd34d; border-color: #b45309; }
+.btn-green  { background-color: #064e3b; color: #6ee7b7; border-color: #059669; }
+.btn-red    { background-color: #450a0a; color: #fca5a5; border-color: #b91c1c; }
+
+
 /* --- Кнопка "Показати пароль" --- */
 .password-wrapper {
     position: relative;
@@ -231,14 +263,14 @@ footer {
 
 .password-wrapper input {
     width: 100%;
-    padding-right: 45px; /* Місце для кнопки */
+    padding-right: 45px;
 }
 
 .toggle-password-btn {
     position: absolute;
     right: 0;
     top: 50%;
-    transform: translateY(-50%); /* Центрування по вертикалі */
+    transform: translateY(-50%);
 
     height: 100%;
     width: 40px;
@@ -249,7 +281,6 @@ footer {
     align-items: center;
     justify-content: center;
 
-    /* Кнопка біла */
     color: #ffffff !important;
     opacity: 1;
 
@@ -267,7 +298,6 @@ footer {
     height: 24px;
 }
 
-/* Fix for Browser Autofill: Якщо фон стає білим, іконка стає чорною */
 input:-webkit-autofill + .toggle-password-btn {
     color: #000000 !important;
     opacity: 1 !important;
@@ -275,7 +305,7 @@ input:-webkit-autofill + .toggle-password-btn {
 
 /* --- Завантаження файлів (Форма) --- */
 #files {
-    display: none; /* Ховаємо стандартний input */
+    display: none;
 }
 
 .custom-file-upload {
@@ -296,7 +326,6 @@ input:-webkit-autofill + .toggle-password-btn {
     border-color: var(--text-muted);
 }
 
-/* Список нових/існуючих файлів у формі */
 .file-upload-list {
     margin-top: 10px;
     list-style: none;
@@ -360,7 +389,7 @@ input:-webkit-autofill + .toggle-password-btn {
     height: 18px;
 }
 
-/* --- Галерея файлів (Деталі заявки) --- */
+/* --- Галерея файлів --- */
 .file-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
