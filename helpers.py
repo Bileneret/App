@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import session, g, flash, redirect, request, url_for
 from flask_mail import Message
-from models import User
+from models import User, ApplicationHistory
 from extensions import db, mail
 
 
@@ -207,6 +207,20 @@ def get_current_user():
     if not user_id:
         return None
     return db.session.get(User, user_id)
+
+def save_history(app_obj, user, event_type):
+    """Зберігає поточний стан заявки в історію."""
+    history_entry = ApplicationHistory(
+        application_id=app_obj.id,
+        changed_by_id=user.id,
+        event_type=event_type,
+        snapshot_title=app_obj.title,
+        snapshot_description=app_obj.short_description,
+        snapshot_status=app_obj.status,
+        snapshot_comment=app_obj.expert_comment
+    )
+    db.session.add(history_entry)
+    # db.session.commit() робиться у викликаючому коді разом з основною зміною
 
 
 def login_required(view_func):

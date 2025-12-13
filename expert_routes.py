@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, g
 from extensions import db
 from models import Application
-from helpers import expert_required, send_status_update_email  # <--- Імпорт функції
+from helpers import expert_required, send_status_update_email, save_history  # <--- Імпорт save_history
 
 
 def register_routes(app):
@@ -38,17 +38,16 @@ def register_routes(app):
                 flash("Для цього рішення коментар є обов'язковим!", "danger")
                 return render_template("expert_review.html", application=app_obj)
 
-            # Оновлюємо статус
             app_obj.status = decision
             app_obj.expert_comment = comment
 
+            # --- ІСТОРІЯ: Експерт змінив статус ---
+            save_history(app_obj, g.user, "status_change")
+
             db.session.commit()
-
-            # --- ВІДПРАВКА ЛИСТА ---
             send_status_update_email(app_obj)
-            # -----------------------
 
-            flash(f"Заявку переведено у статус: {decision}. Користувача сповіщено.", "success")
+            flash(f"Заявку переведено у статус: {decision}.", "success")
             return redirect(url_for("expert_dashboard"))
 
         return render_template("expert_review.html", application=app_obj)

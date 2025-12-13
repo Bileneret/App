@@ -8,7 +8,6 @@
     <p><strong>Назва:</strong> {{ application.title }}</p>
     <div style="margin: 10px 0; display: flex; align-items: center; gap: 10px;">
         <strong>Статус:</strong>
-
         {% if application.status == 'draft' %}
             <span class="status-badge status-draft">Чорнетка</span>
         {% elif application.status == 'submitted' %}
@@ -46,15 +45,10 @@
                     <span class="file-name" title="{{ f.filename }}">{{ f.filename }}</span>
                     <div class="file-actions">
                         <button type="button" class="icon-btn" onclick="openPreview('{{ url_for('download_file', filename=f.filename) }}', '{{ ext }}')" title="Переглянути">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </button>
                         <a href="{{ url_for('download_file', filename=f.filename) }}" class="icon-btn" title="Завантажити" download>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M12 9.75l-3 3m0 0l3 3m-3-3l-3 3M12 9.75V3" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M12 9.75l-3 3m0 0l3 3m-3-3l-3 3M12 9.75V3" /></svg>
                         </a>
                     </div>
                 </div>
@@ -73,7 +67,52 @@
 <h2>Опис</h2>
 <p class="description-content">{{ application.short_description }}</p>
 
-<hr>
+<hr style="margin: 40px 0; border-top: 1px solid var(--border);">
+<h3>Історія змін та коментарів</h3>
+
+<div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border); padding: 20px;">
+    {% if application.history %}
+        <div class="timeline">
+            {% for event in application.history %}
+                <div class="timeline-item">
+                    <div class="timeline-header">
+                        <span class="timeline-date">{{ event.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+
+                        {% if event.event_type == 'created' %}
+                            <span class="status-badge" style="background:#333; border:1px solid #555;">Створено</span>
+                        {% elif event.event_type == 'edited' %}
+                            <span class="status-badge" style="background:#0c4a6e; border:1px solid #0ea5e9; color:#bae6fd;">Відредаговано</span>
+                        {% elif event.event_type == 'status_change' %}
+                            <span class="status-badge" style="background:#4c1d95; border:1px solid #8b5cf6; color:#ddd6fe;">Зміна статусу</span>
+                        {% endif %}
+
+                        <span style="margin-left: 10px; color: var(--text-muted); font-size: 0.9rem;">
+                            Ким: {{ event.changed_by.email }} ({{ event.changed_by.role }})
+                        </span>
+                    </div>
+
+                    <div class="timeline-content">
+                        {% if event.snapshot_status %}
+                            <p style="margin: 5px 0;"><strong>Статус:</strong> {{ event.snapshot_status }}</p>
+                        {% endif %}
+
+                        {% if event.snapshot_comment %}
+                            <div style="margin-top: 10px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; color: #e0e0e0;">
+                                <strong>Коментар:</strong><br>
+                                {{ event.snapshot_comment }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not loop.last %}<hr style="border-top: 1px dashed #333; margin: 15px 0;">{% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: var(--text-muted);">Історія змін відсутня.</p>
+    {% endif %}
+</div>
+
+<hr style="margin: 40px 0;">
 
 {% if g.user.id == application.owner_id %}
     {% if application.status in ("draft", "needs_changes") %}
@@ -85,7 +124,7 @@
 
             <form action="{{ url_for('submit_application', application_id=application.id) }}" method="post" style="margin: 0;">
                 <button type="submit" class="action-btn-unified btn-green"
-                        onclick="return confirm('Ви впевнені, що хочете подати цю заявку? Після подачі ви не зможете її редагувати.');">
+                        onclick="return confirm('Ви впевнені, що хочете подати цю заявку?');">
                     Подати на розгляд
                 </button>
             </form>
@@ -144,38 +183,28 @@
             iframe.style.backgroundColor = "#fff";
             modalBody.appendChild(iframe);
         } else if (officeTypes.includes(ext)) {
-            var fullUrl = window.location.origin + url;
-            var iframe = document.createElement("iframe");
-            iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);
-            iframe.style.width = "100%";
-            iframe.style.height = "100%";
-            iframe.style.border = "none";
-            iframe.style.backgroundColor = "#fff";
-            modalBody.appendChild(iframe);
+            if (url.startsWith('blob:')) {
+                 modalBody.innerHTML = "<div style='color:white; text-align:center; padding: 20px;'>Збережіть заявку для перегляду.</div>";
+            } else {
+                var fullUrl = window.location.origin + url;
+                var iframe = document.createElement("iframe");
+                iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);
+                iframe.style.width = "100%";
+                iframe.style.height = "100%";
+                iframe.style.border = "none";
+                iframe.style.backgroundColor = "#fff";
+                modalBody.appendChild(iframe);
 
-            var btn = document.createElement("a");
-            btn.href = url;
-            btn.download = "";
-            btn.innerText = "⬇ Завантажити копію";
-            btn.className = "action-btn-unified btn-green";
-            btn.style.cssText = "position: absolute; bottom: 20px; right: 20px; z-index: 10005; box-shadow: 0 0 10px rgba(0,0,0,0.5);";
-            modalBody.appendChild(btn);
-
-            if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
-                var warning = document.createElement("div");
-                warning.innerText = "⚠️ На localhost перегляд Office-файлів не працює.";
-                warning.style.cssText = "position:absolute; top:10px; left:50%; transform:translateX(-50%); background:orange; padding:10px; z-index:10002; color:black;";
-                modalBody.appendChild(warning);
+                var btn = document.createElement("a");
+                btn.href = url;
+                btn.download = "";
+                btn.innerText = "⬇ Завантажити копію";
+                btn.className = "action-btn-unified btn-green";
+                btn.style.cssText = "position: absolute; bottom: 20px; right: 20px; z-index: 10005;";
+                modalBody.appendChild(btn);
             }
         } else {
-            modalBody.innerHTML = `
-                <div style="text-align: center; color: #e0e0e0;">
-                    <div style="font-size: 5rem; margin-bottom: 20px;">📄</div>
-                    <p style="font-size: 1.5rem; margin-bottom: 10px;">Попередній перегляд недоступний</p>
-                    <p style="color: #a0a0a0; margin-bottom: 30px;">Браузер не може відобразити файл типу <b>.${ext}</b>.</p>
-                    <a href="${url}" class="action-btn-unified btn-green" download style="display: inline-block; padding: 12px 24px; font-size: 1rem;">⬇️ Завантажити файл</a>
-                </div>
-            `;
+            modalBody.innerHTML = "<div style='color:white; text-align:center;'>Перегляд недоступний. <a href='"+url+"' class='action-btn-unified btn-green'>Завантажити</a></div>";
         }
     }
 

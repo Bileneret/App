@@ -545,3 +545,30 @@ input:-webkit-autofill + .toggle-password-btn {
 .close-modal:hover {
     color: var(--danger);
 }
+
+/* --- TIMELINE (Історія) --- */
+.timeline-item {
+    padding: 5px 0;
+}
+
+.timeline-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.timeline-date {
+    font-family: monospace;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.timeline-content {
+    margin-left: 20px;
+    padding-left: 15px;
+    border-left: 2px solid var(--border);
+    font-size: 0.95rem;
+    color: #ccc;
+}

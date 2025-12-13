@@ -16,7 +16,7 @@
            value="{{ title_value or '' }}">
 
     <label for="short_description">Короткий опис</label>
-    <textarea id="short_description" name="short_description" rows="1" required
+    <textarea id="short_description" name="short_description" rows="6" required
               class="auto-expand"
               style="width:100%; padding:10px; border-radius:4px; border:1px solid #333; background: #2d2d2d; color: white;">{{ description_value or '' }}</textarea>
 
@@ -59,7 +59,54 @@
     </button>
 </form>
 
-<p>
+{% if application %}
+    <hr style="margin: 40px 0; border-top: 1px solid var(--border);">
+    <h3>Історія змін та коментарів</h3>
+
+    <div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border); padding: 20px;">
+        {% if application.history %}
+            <div class="timeline">
+                {% for event in application.history %}
+                    <div class="timeline-item">
+                        <div class="timeline-header">
+                            <span class="timeline-date">{{ event.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+
+                            {% if event.event_type == 'created' %}
+                                <span class="status-badge" style="background:#333; border:1px solid #555;">Створено</span>
+                            {% elif event.event_type == 'edited' %}
+                                <span class="status-badge" style="background:#0c4a6e; border:1px solid #0ea5e9; color:#bae6fd;">Відредаговано</span>
+                            {% elif event.event_type == 'status_change' %}
+                                <span class="status-badge" style="background:#4c1d95; border:1px solid #8b5cf6; color:#ddd6fe;">Зміна статусу</span>
+                            {% endif %}
+
+                            <span style="margin-left: 10px; color: var(--text-muted); font-size: 0.9rem;">
+                                Ким: {{ event.changed_by.email }} ({{ event.changed_by.role }})
+                            </span>
+                        </div>
+
+                        <div class="timeline-content">
+                            {% if event.snapshot_status %}
+                                <p style="margin: 5px 0;"><strong>Статус:</strong> {{ event.snapshot_status }}</p>
+                            {% endif %}
+
+                            {% if event.snapshot_comment %}
+                                <div style="margin-top: 10px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; color: #e0e0e0;">
+                                    <strong>Коментар:</strong><br>
+                                    {{ event.snapshot_comment }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if not loop.last %}<hr style="border-top: 1px dashed #333; margin: 15px 0;">{% endif %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: var(--text-muted);">Історія змін відсутня.</p>
+        {% endif %}
+    </div>
+{% endif %}
+
+<p style="margin-top: 20px;">
     <a href="{{ url_for('my_applications') }}">Повернутися до списку заявок</a>
 </p>
 
@@ -91,7 +138,7 @@
         }, 100);
     }
 
-    // --- Логіка файлів (стара) ---
+    // --- Логіка файлів ---
     let selectedFiles = [];
     const MAX_FILES = 10;
 
@@ -158,6 +205,7 @@
         }
     }
 
+    // --- МОДАЛЬНЕ ВІКНО ---
     var modal = document.getElementById("previewModal");
     var modalBody = document.getElementById("modalBody");
 
