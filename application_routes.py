@@ -5,22 +5,20 @@ from flask import (
 from werkzeug.utils import secure_filename
 from extensions import db
 from models import Application, ApplicationFile
-from helpers import login_required, save_history  # <--- Імпорт save_history
+from helpers import login_required, save_history
 
 
 def register_routes(app):
-    def allowed_file(filename):
-        return '.' in filename
-
     @app.route("/applications")
     @login_required
     def my_applications():
-        apps = (
-            Application.query
+        # Новий синтаксис Select
+        stmt = (
+            db.select(Application)
             .filter_by(owner_id=g.user.id)
             .order_by(Application.created_at.desc())
-            .all()
         )
+        apps = db.session.execute(stmt).scalars().all()
         return render_template("applications_list.html", applications=apps)
 
     @app.route("/applications/new", methods=["GET", "POST"])
@@ -79,7 +77,9 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>")
     @login_required
     def view_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО: db.get_or_404
+        app_obj = db.get_or_404(Application, application_id)
+
         if app_obj.owner_id != g.user.id and g.user.role not in ('expert', 'admin', 'super_admin'):
             flash("Ви не маєте доступу до цієї заявки.", "danger")
             return redirect(url_for("my_applications"))
@@ -88,7 +88,9 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>/edit", methods=["GET", "POST"])
     @login_required
     def edit_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО: db.get_or_404
+        app_obj = db.get_or_404(Application, application_id)
+
         if app_obj.owner_id != g.user.id:
             flash("Ви не можете редагувати цю заявку.", "danger")
             return redirect(url_for("my_applications"))
@@ -140,7 +142,9 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>/submit", methods=["POST"])
     @login_required
     def submit_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО: db.get_or_404
+        app_obj = db.get_or_404(Application, application_id)
+
         if app_obj.owner_id != g.user.id:
             flash("Ви не можете подати цю заявку.", "danger")
             return redirect(url_for("my_applications"))
@@ -160,7 +164,9 @@ def register_routes(app):
     @app.route("/applications/<int:application_id>/cancel", methods=["POST"])
     @login_required
     def cancel_application(application_id):
-        app_obj = Application.query.get_or_404(application_id)
+        # ВИПРАВЛЕНО: db.get_or_404
+        app_obj = db.get_or_404(Application, application_id)
+
         if app_obj.owner_id != g.user.id:
             flash("Ви не можете скасовувати чужу заявку.", "danger")
             return redirect(url_for("my_applications"))
@@ -180,7 +186,9 @@ def register_routes(app):
     @app.route("/applications/file/<int:file_id>/delete", methods=["POST"])
     @login_required
     def delete_file_route(file_id):
-        file_record = ApplicationFile.query.get_or_404(file_id)
+        # ВИПРАВЛЕНО: db.get_or_404
+        file_record = db.get_or_404(ApplicationFile, file_id)
+
         app_obj = file_record.application
         if app_obj.owner_id != g.user.id:
             flash("Ви не маєте права видаляти цей файл.", "danger")
@@ -194,13 +202,10 @@ def register_routes(app):
                 print(f"Error deleting file: {e}")
 
         db.session.delete(file_record)
-        # Можна додати запис save_history, якщо треба фіксувати видалення файлів
-
         db.session.commit()
         flash("Файл видалено.", "success")
         return redirect(url_for("edit_application", application_id=app_obj.id))
 
-    # --- СКАЧУВАННЯ ФАЙЛІВ (ПУБЛІЧНИЙ ДОСТУП) ---
     @app.route("/uploads/<filename>")
     def download_file(filename):
         if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
