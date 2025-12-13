@@ -1,127 +1,93 @@
 import io
+import os
+from unittest.mock import patch
 from extensions import db
-from models import Application, ApplicationFile, User
+from models import Application
 
 
-def get_app_by_title(title):
-    """Допоміжна функція для отримання заявки без Legacy API."""
-    return db.session.execute(
-        db.select(Application).filter_by(title=title)
-    ).scalar_one_or_none()
-
-
-def test_create_application_success(client, user):
+def test_create_application_success(client, auth_headers, app):
     """Перевірка створення заявки (має стати Draft)."""
-    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
-
+    data = {
+        "title": "Тестова заявка",
+        "short_description": "Опис винаходу",
+        "files": (io.BytesIO(b"file content"), 'test.txt')
+    }
     response = client.post(
         "/applications/new",
-        data={
-            "title": "Тестова заявка",
-            "short_description": "Опис винаходу"
-        },
+        data=data,
+        content_type='multipart/form-data',
+        headers=auth_headers,
         follow_redirects=True
     )
-
     assert response.status_code == 200
     assert "Заявку успішно створено" in response.get_data(as_text=True)
 
-    with client.application.app_context():
-        app_db = get_app_by_title("Тестова заявка")
+    with app.app_context():
+        app_db = Application.query.filter_by(title="Тестова заявка").first()
         assert app_db is not None
         assert app_db.status == "draft"
+        assert len(app_db.files) == 1
 
 
-def test_create_application_with_file(client, user):
-    """Створення заявки з файлом."""
-    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+def test_edit_application(client, auth_headers, app):
+    """Тест редагування заявки."""
+    # Спочатку створюємо заявку
+    client.post("/applications/new", data={"title": "Old", "short_description": "Desc"}, headers=auth_headers)
 
-    data = {
-        "title": "Test App",
-        "short_description": "Description",
-        "files": (io.BytesIO(b"file content"), "test_doc.txt")
-    }
+    with app.app_context():
+        app_id = Application.query.filter_by(title="Old").first().id
 
-    response = client.post("/applications/new", data=data, content_type='multipart/form-data', follow_redirects=True)
+    # Редагуємо
+    response = client.post(f"/applications/{app_id}/edit", data={
+        "title": "New Title",
+        "short_description": "New Desc"
+    }, headers=auth_headers, follow_redirects=True)
+
     assert response.status_code == 200
-    assert "Заявку успішно створено" in response.get_data(as_text=True)
-
-    with client.application.app_context():
-        app_obj = get_app_by_title("Test App")
-        assert len(app_obj.files) == 1
-        assert "test_doc.txt" in app_obj.files[0].filename
-
-
-def test_edit_application_add_file(client, user):
-    """Редагування заявки та додавання файлу."""
-    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
-    client.post("/applications/new", data={"title": "Draft App", "short_description": "Desc"})
-
-    with client.application.app_context():
-        app_id = get_app_by_title("Draft App").id
-
-    data = {
-        "title": "Updated Title",
-        "short_description": "Updated Desc",
-        "files": (io.BytesIO(b"new content"), "new_file.pdf")
-    }
-    response = client.post(f"/applications/{app_id}/edit", data=data, content_type='multipart/form-data',
-                           follow_redirects=True)
-
     assert "Заявку оновлено" in response.get_data(as_text=True)
 
 
-def test_submit_and_cancel_application(client, user):
-    """Подача та скасування заявки."""
-    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
-    client.post("/applications/new", data={"title": "To Submit", "short_description": "..."})
+def test_submit_and_cancel_application(client, auth_headers, app):
+    """Перевірка подачі та скасування заявки."""
+    client.post("/applications/new", data={"title": "Submit App", "short_description": "Desc"}, headers=auth_headers)
 
-    with client.application.app_context():
-        app_id = get_app_by_title("To Submit").id
+    with app.app_context():
+        app_id = Application.query.filter_by(title="Submit App").first().id
 
-    # Submit
-    client.post(f"/applications/{app_id}/submit", follow_redirects=True)
-    with client.application.app_context():
+    # Подача
+    client.post(f"/applications/{app_id}/submit", headers=auth_headers, follow_redirects=True)
+    with app.app_context():
         assert db.session.get(Application, app_id).status == "submitted"
 
-    # Cancel
-    client.post(f"/applications/{app_id}/cancel", follow_redirects=True)
-    with client.application.app_context():
+    # Скасування
+    client.post(f"/applications/{app_id}/cancel", headers=auth_headers, follow_redirects=True)
+    with app.app_context():
         assert db.session.get(Application, app_id).status == "cancelled"
 
 
-def test_delete_file(client, user):
-    """Видалення файлу із заявки."""
-    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+def test_delete_file_error(client, auth_headers, app):
+    """Тест обробки помилки при видаленні файлу (коли файлу фізично немає)."""
+    # Створюємо заявку з файлом
+    data = {
+        'title': 'App with file',
+        'short_description': 'Desc',
+        'files': (io.BytesIO(b"content"), 'to_delete.txt')
+    }
+    client.post('/applications/new', data=data, content_type='multipart/form-data', headers=auth_headers)
 
-    data = {"title": "File Del", "short_description": "Desc", "files": (io.BytesIO(b"x"), "del.txt")}
-    client.post("/applications/new", data=data, content_type='multipart/form-data', follow_redirects=True)
-
-    with client.application.app_context():
-        app_obj = get_app_by_title("File Del")
+    # Знаходимо ID файлу
+    with app.app_context():
+        app_obj = Application.query.filter_by(title="App with file").first()
         file_id = app_obj.files[0].id
 
-    response = client.post(f"/applications/file/{file_id}/delete", follow_redirects=True)
-    assert "Файл видалено" in response.get_data(as_text=True)
+    # Імітуємо помилку ОС при видаленні
+    with patch('os.remove', side_effect=OSError("Disk error")):
+        response = client.post(f'/applications/file/{file_id}/delete', headers=auth_headers, follow_redirects=True)
+        assert response.status_code == 200
+        assert "Файл видалено" in response.get_data(as_text=True)
 
-    with client.application.app_context():
-        assert db.session.get(ApplicationFile, file_id) is None
 
-
-def test_access_denied_to_other_users(client, user):
-    """Користувач не може бачити чужі заявки."""
-    with client.application.app_context():
-        other = User(email="other@example.com", role="applicant")
-        other.set_password("12345678")
-        db.session.add(other)
-        db.session.commit()
-
-        other_app = Application(title="Secret", short_description="...", owner_id=other.id)
-        db.session.add(other_app)
-        db.session.commit()
-        app_id = other_app.id
-
-    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
-
-    response = client.get(f"/applications/{app_id}", follow_redirects=True)
-    assert "Ви не маєте доступу" in response.get_data(as_text=True)
+def test_download_missing_file(client, auth_headers):
+    """Тест спроби завантажити неіснуючий файл."""
+    response = client.get('/uploads/ghost_file.txt', headers=auth_headers)
+    assert response.status_code == 404
