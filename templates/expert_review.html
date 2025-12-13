@@ -17,7 +17,7 @@
             {% set ext = f.filename.split('.')[-1].lower() %}
             <div class="file-card">
                 <div class="file-preview">
-                    {% if ext in ['png', 'jpg', 'jpeg', 'gif'] %}
+                    {% if ext in ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] %}
                         <img src="{{ url_for('download_file', filename=f.filename) }}" alt="Preview">
                     {% else %}
                         <div class="file-icon">📄</div>
@@ -68,8 +68,8 @@
 </p>
 
 <div id="previewModal" class="modal">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
     <div class="modal-content">
-        <span class="close-modal" onclick="closeModal()">&times;</span>
         <div id="modalBody"></div>
     </div>
 </div>
@@ -82,21 +82,59 @@
         modal.style.display = "block";
         modalBody.innerHTML = "";
 
-        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        const nativeImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+        const nativeIframe = ['pdf', 'txt', 'mp4', 'webm', 'mp3'];
+        const officeTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+
+        if (nativeImage.includes(ext)) {
             var img = document.createElement("img");
             img.src = url;
             img.style.maxWidth = "100%";
-            img.style.maxHeight = "80vh";
+            img.style.maxHeight = "100%";
+            img.style.objectFit = "contain";
             modalBody.appendChild(img);
-        } else if (['pdf', 'txt'].includes(ext)) {
+        } else if (nativeIframe.includes(ext)) {
             var iframe = document.createElement("iframe");
             iframe.src = url;
             iframe.style.width = "100%";
-            iframe.style.height = "80vh";
+            iframe.style.height = "100%";
             iframe.style.border = "none";
+            iframe.style.backgroundColor = "#fff";
             modalBody.appendChild(iframe);
+        } else if (officeTypes.includes(ext)) {
+            // MICROSOFT OFFICE VIEWER
+            var fullUrl = window.location.origin + url;
+            var iframe = document.createElement("iframe");
+            iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);
+            iframe.style.width = "100%";
+            iframe.style.height = "100%";
+            iframe.style.border = "none";
+            iframe.style.backgroundColor = "#fff";
+            modalBody.appendChild(iframe);
+
+            var btn = document.createElement("a");
+            btn.href = url;
+            btn.download = "";
+            btn.innerText = "⬇ Завантажити копію";
+            btn.className = "action-btn-unified btn-green";
+            btn.style.cssText = "position: absolute; bottom: 20px; right: 20px; z-index: 10005; box-shadow: 0 0 10px rgba(0,0,0,0.5);";
+            modalBody.appendChild(btn);
+
+            if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+                var warning = document.createElement("div");
+                warning.innerText = "⚠️ На localhost перегляд Office-файлів не працює.";
+                warning.style.cssText = "position:absolute; top:10px; left:50%; transform:translateX(-50%); background:orange; padding:10px; z-index:10002; color:black;";
+                modalBody.appendChild(warning);
+            }
         } else {
-            modalBody.innerHTML = "<p style='color:white; text-align:center; padding: 50px;'>Перегляд цього типу файлу не підтримується.<br>Будь ласка, завантажте його.</p>";
+            modalBody.innerHTML = `
+                <div style="text-align: center; color: #e0e0e0;">
+                    <div style="font-size: 5rem; margin-bottom: 20px;">📄</div>
+                    <p style="font-size: 1.5rem; margin-bottom: 10px;">Попередній перегляд недоступний</p>
+                    <p style="color: #a0a0a0; margin-bottom: 30px;">Браузер не може відобразити файл типу <b>.${ext}</b>.</p>
+                    <a href="${url}" class="action-btn-unified btn-green" download style="display: inline-block; padding: 12px 24px; font-size: 1rem;">⬇️ Завантажити файл</a>
+                </div>
+            `;
         }
     }
 

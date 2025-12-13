@@ -31,7 +31,6 @@
                                 onclick="openPreview('{{ url_for('download_file', filename=f.filename) }}', '{{ ext }}')">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         </button>
-
                         <button type="button" class="action-btn delete" title="Видалити"
                                 onclick="deleteServerFile('{{ url_for('delete_file_route', file_id=f.id) }}')">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -42,7 +41,10 @@
         </ul>
     {% endif %}
 
-    <label>Додати нові файли (Ліміт: до 10 файлів сумарно та не більше 100МБ)</label>
+    <label>Додати нові файли</label>
+    <p style="margin-top: -5px; margin-bottom: 10px; font-size: 0.9rem; color: #a0a0a0;">
+        ℹ️ Максимальна кількість файлів: <strong>10</strong>.
+    </p>
 
     <label for="files" class="custom-file-upload">
         📂 Обрати файли...
@@ -63,54 +65,36 @@
 <form id="deleteFileForm" method="post" style="display:none;"></form>
 
 <div id="previewModal" class="modal">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
     <div class="modal-content">
-        <span class="close-modal" onclick="closeModal()">&times;</span>
         <div id="modalBody"></div>
     </div>
 </div>
 
 <script>
-    // --- ЗМІННІ ---
-    // Зберігаємо всі вибрані файли в масиві, щоб можна було видаляти окремо
     let selectedFiles = [];
     const MAX_FILES = 10;
-
-    // Враховуємо файли, які вже є на сервері (якщо це редагування)
-    const existingFilesCount = {{ application.files|length if application and application.files else 0 }};
-
-    // --- ФУНКЦІЇ ДЛЯ НОВИХ ФАЙЛІВ ---
 
     function handleFileSelect(event) {
         const input = event.target;
         if (!input.files || input.files.length === 0) return;
-
-        // Додаємо нові файли до нашого масиву
         for (let i = 0; i < input.files.length; i++) {
             selectedFiles.push(input.files[i]);
         }
-
         updateFileListUI();
     }
 
     function updateFileListUI() {
         const listEl = document.getElementById('newFileList');
         const input = document.getElementById('files');
-
-        // 1. Сортуємо по алфавіту
         selectedFiles.sort((a, b) => a.name.localeCompare(b.name));
-
-        // 2. Оновлюємо відображення
         listEl.innerHTML = '';
 
         if (selectedFiles.length > 0) {
             listEl.style.display = 'block';
-
             selectedFiles.forEach((file, index) => {
                 const li = document.createElement('li');
                 li.className = 'file-upload-item';
-
-                // Визначаємо тип для прев'ю
-                const ext = file.name.split('.').pop().toLowerCase();
 
                 li.innerHTML = `
                     <span class="file-upload-name">🆕 ${file.name}</span>
@@ -129,8 +113,6 @@
             listEl.style.display = 'none';
         }
 
-        // 3. Синхронізуємо масив з реальним input (через DataTransfer)
-        // Це магія, яка дозволяє відправити оновлений список файлів
         const dataTransfer = new DataTransfer();
         selectedFiles.forEach(file => dataTransfer.items.add(file));
         input.files = dataTransfer.files;
@@ -144,13 +126,9 @@
     function previewLocalFile(index) {
         const file = selectedFiles[index];
         const ext = file.name.split('.').pop().toLowerCase();
-
-        // Створюємо тимчасовий URL для файлу
         const objectUrl = URL.createObjectURL(file);
         openPreview(objectUrl, ext);
     }
-
-    // --- ФУНКЦІЇ ДЛЯ СЕРВЕРНИХ ФАЙЛІВ ---
 
     function deleteServerFile(url) {
         if (confirm("Ви впевнені, що хочете видалити цей файл?")) {
@@ -160,8 +138,6 @@
         }
     }
 
-    // --- ФУНКЦІЇ МОДАЛЬНОГО ВІКНА (Спільні) ---
-
     var modal = document.getElementById("previewModal");
     var modalBody = document.getElementById("modalBody");
 
@@ -169,21 +145,63 @@
         modal.style.display = "block";
         modalBody.innerHTML = "";
 
-        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        const nativeImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+        const nativeIframe = ['pdf', 'txt', 'mp4', 'webm', 'mp3'];
+        const officeTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+
+        if (nativeImage.includes(ext)) {
             var img = document.createElement("img");
             img.src = url;
             img.style.maxWidth = "100%";
-            img.style.maxHeight = "80vh";
+            img.style.maxHeight = "100%";
+            img.style.objectFit = "contain";
             modalBody.appendChild(img);
-        } else if (['pdf', 'txt'].includes(ext)) {
+        } else if (nativeIframe.includes(ext)) {
             var iframe = document.createElement("iframe");
             iframe.src = url;
             iframe.style.width = "100%";
-            iframe.style.height = "80vh";
+            iframe.style.height = "100%";
             iframe.style.border = "none";
+            iframe.style.backgroundColor = "#fff";
             modalBody.appendChild(iframe);
+        } else if (officeTypes.includes(ext)) {
+            // MICROSOFT OFFICE VIEWER
+            if (url.startsWith('blob:')) {
+                 modalBody.innerHTML = "<div style='color:white; text-align:center; padding: 20px;'>Попередній перегляд Office-файлів доступний тільки після збереження заявки.</div>";
+            } else {
+                var fullUrl = window.location.origin + url;
+                var iframe = document.createElement("iframe");
+                iframe.src = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(fullUrl);
+                iframe.style.width = "100%";
+                iframe.style.height = "100%";
+                iframe.style.border = "none";
+                iframe.style.backgroundColor = "#fff";
+                modalBody.appendChild(iframe);
+
+                var btn = document.createElement("a");
+                btn.href = url;
+                btn.download = "";
+                btn.innerText = "⬇ Завантажити копію";
+                btn.className = "action-btn-unified btn-green";
+                btn.style.cssText = "position: absolute; bottom: 20px; right: 20px; z-index: 10005; box-shadow: 0 0 10px rgba(0,0,0,0.5);";
+                modalBody.appendChild(btn);
+
+                if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+                    var warning = document.createElement("div");
+                    warning.innerText = "⚠️ На localhost перегляд Office-файлів не працює.";
+                    warning.style.cssText = "position:absolute; top:10px; left:50%; transform:translateX(-50%); background:orange; padding:10px; z-index:10002; color:black;";
+                    modalBody.appendChild(warning);
+                }
+            }
         } else {
-            modalBody.innerHTML = "<p style='color:white; text-align:center; padding: 50px;'>Перегляд недоступний для цього типу файлу.</p>";
+            modalBody.innerHTML = `
+                <div style="text-align: center; color: #e0e0e0;">
+                    <div style="font-size: 5rem; margin-bottom: 20px;">📄</div>
+                    <p style="font-size: 1.5rem; margin-bottom: 10px;">Попередній перегляд недоступний</p>
+                    <p style="color: #a0a0a0; margin-bottom: 30px;">Браузер не може відобразити файл типу <b>.${ext}</b>.</p>
+                    <a href="${url}" class="action-btn-unified btn-green" download style="display: inline-block; padding: 12px 24px; font-size: 1rem;">⬇️ Завантажити файл</a>
+                </div>
+            `;
         }
     }
 
