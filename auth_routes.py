@@ -8,6 +8,7 @@ from flask import (
     session,
     g,
 )
+from markupsafe import Markup  # Необхідно для форматування списку помилок
 from email_validator import validate_email, EmailNotValidError
 
 from extensions import db
@@ -177,22 +178,45 @@ def register_routes(app):
     @login_required
     def change_password():
         if request.method == "POST":
-            old_password = request.form.get("old_password") or ""
+            # ВИПРАВЛЕННЯ ТУТ: беремо "current_password", як в HTML, а не "old_password"
+            current_password = request.form.get("current_password") or ""
             new_password = request.form.get("new_password") or ""
             confirm_password = request.form.get("confirm_password") or ""
 
-            if not g.user.check_password(old_password):
-                flash("Неправильний поточний пароль.", "danger")
+            # 1. Збираємо результати перевірок (bool)
+            is_length_bad = len(new_password) < 8
+            is_mismatch = new_password != confirm_password
+            is_old_wrong = not g.user.check_password(current_password)
+
+            # 2. Формуємо список повідомлень за ПРІОРИТЕТОМ
+            error_messages = []
+
+            # Пріорітет 1: Довжина пароля
+            if is_length_bad:
+                error_messages.append("Пароль має містити щонайменше 8 символів.")
+
+            # Пріорітет 2: Співпадіння паролів
+            if is_mismatch:
+                error_messages.append("Нові паролі не співпадають.")
+
+            # Пріорітет 3: Перевірка поточного пароля
+            if is_old_wrong:
+                error_messages.append("Неправильний поточний пароль.")
+
+            # 3. Якщо є хоч одна помилка - виводимо їх усі
+            if error_messages:
+                # Формуємо нумерований список
+                formatted_errors = []
+                for i, msg in enumerate(error_messages):
+                    formatted_errors.append(f"{i + 1}. {msg}")
+
+                final_html_msg = "<br>".join(formatted_errors)
+
+                # Markup каже Flask-у, що теги <br> безпечні
+                flash(Markup(final_html_msg), "danger")
                 return render_template("change_password.html")
 
-            if len(new_password) < 8:
-                flash("Новий пароль має містити щонайменше 8 символів.", "danger")
-                return render_template("change_password.html")
-
-            if new_password != confirm_password:
-                flash("Новий пароль і підтвердження не співпадають.", "danger")
-                return render_template("change_password.html")
-
+            # Якщо помилок немає
             g.user.set_password(new_password)
             db.session.commit()
 
