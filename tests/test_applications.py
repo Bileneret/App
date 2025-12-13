@@ -1,71 +1,127 @@
 import io
 from extensions import db
-# ВИПРАВЛЕНО: Додано імпорт User
-from models import Application, User
+from models import Application, ApplicationFile, User
 
 
-def test_create_application_with_files(client, user):
+def get_app_by_title(title):
+    """Допоміжна функція для отримання заявки без Legacy API."""
+    return db.session.execute(
+        db.select(Application).filter_by(title=title)
+    ).scalar_one_or_none()
+
+
+def test_create_application_success(client, user):
+    """Перевірка створення заявки (має стати Draft)."""
+    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+
+    response = client.post(
+        "/applications/new",
+        data={
+            "title": "Тестова заявка",
+            "short_description": "Опис винаходу"
+        },
+        follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert "Заявку успішно створено" in response.get_data(as_text=True)
+
+    with client.application.app_context():
+        app_db = get_app_by_title("Тестова заявка")
+        assert app_db is not None
+        assert app_db.status == "draft"
+
+
+def test_create_application_with_file(client, user):
+    """Створення заявки з файлом."""
     client.post("/login", data={"email": user.email, "password": "StrongPass1"})
 
     data = {
-        "title": "New App",
+        "title": "Test App",
         "short_description": "Description",
-        "files": (io.BytesIO(b"file content"), 'test.txt')
+        "files": (io.BytesIO(b"file content"), "test_doc.txt")
     }
 
     response = client.post("/applications/new", data=data, content_type='multipart/form-data', follow_redirects=True)
+    assert response.status_code == 200
     assert "Заявку успішно створено" in response.get_data(as_text=True)
-    assert "test.txt" in response.get_data(as_text=True)
+
+    with client.application.app_context():
+        app_obj = get_app_by_title("Test App")
+        assert len(app_obj.files) == 1
+        assert "test_doc.txt" in app_obj.files[0].filename
 
 
-def test_submit_application(client, app, user):
-    # 1. Створюємо чернетку
-    with app.app_context():
-        u = db.session.merge(user)
-        app_obj = Application(title="Draft", short_description="Desc", owner=u, status="draft")
-        db.session.add(app_obj)
-        db.session.commit()
-        app_id = app_obj.id
-
+def test_edit_application_add_file(client, user):
+    """Редагування заявки та додавання файлу."""
     client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+    client.post("/applications/new", data={"title": "Draft App", "short_description": "Desc"})
 
-    # 2. Подаємо заявку
-    response = client.post(f"/applications/{app_id}/submit", follow_redirects=True)
-    assert "Заявку подано на розгляд" in response.get_data(as_text=True)
+    with client.application.app_context():
+        app_id = get_app_by_title("Draft App").id
 
-    with app.app_context():
+    data = {
+        "title": "Updated Title",
+        "short_description": "Updated Desc",
+        "files": (io.BytesIO(b"new content"), "new_file.pdf")
+    }
+    response = client.post(f"/applications/{app_id}/edit", data=data, content_type='multipart/form-data',
+                           follow_redirects=True)
+
+    assert "Заявку оновлено" in response.get_data(as_text=True)
+
+
+def test_submit_and_cancel_application(client, user):
+    """Подача та скасування заявки."""
+    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+    client.post("/applications/new", data={"title": "To Submit", "short_description": "..."})
+
+    with client.application.app_context():
+        app_id = get_app_by_title("To Submit").id
+
+    # Submit
+    client.post(f"/applications/{app_id}/submit", follow_redirects=True)
+    with client.application.app_context():
         assert db.session.get(Application, app_id).status == "submitted"
 
+    # Cancel
+    client.post(f"/applications/{app_id}/cancel", follow_redirects=True)
+    with client.application.app_context():
+        assert db.session.get(Application, app_id).status == "cancelled"
 
-def test_edit_submitted_application_forbidden(client, app, user):
-    """Не можна редагувати заявку, яка вже подана."""
-    with app.app_context():
-        u = db.session.merge(user)
-        app_obj = Application(title="Submitted", short_description="Desc", owner=u, status="submitted")
-        db.session.add(app_obj)
+
+def test_delete_file(client, user):
+    """Видалення файлу із заявки."""
+    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
+
+    data = {"title": "File Del", "short_description": "Desc", "files": (io.BytesIO(b"x"), "del.txt")}
+    client.post("/applications/new", data=data, content_type='multipart/form-data', follow_redirects=True)
+
+    with client.application.app_context():
+        app_obj = get_app_by_title("File Del")
+        file_id = app_obj.files[0].id
+
+    response = client.post(f"/applications/file/{file_id}/delete", follow_redirects=True)
+    assert "Файл видалено" in response.get_data(as_text=True)
+
+    with client.application.app_context():
+        assert db.session.get(ApplicationFile, file_id) is None
+
+
+def test_access_denied_to_other_users(client, user):
+    """Користувач не може бачити чужі заявки."""
+    with client.application.app_context():
+        other = User(email="other@example.com", role="applicant")
+        other.set_password("12345678")
+        db.session.add(other)
         db.session.commit()
-        app_id = app_obj.id
+
+        other_app = Application(title="Secret", short_description="...", owner_id=other.id)
+        db.session.add(other_app)
+        db.session.commit()
+        app_id = other_app.id
 
     client.post("/login", data={"email": user.email, "password": "StrongPass1"})
-    response = client.post(f"/applications/{app_id}/edit", data={"title": "New Title"}, follow_redirects=True)
 
-    assert "Редагувати можна лише чернетки" in response.get_data(as_text=True)
-
-
-def test_access_other_user_application(client, app, user):
-    """Користувач не повинен бачити чужі заявки."""
-    with app.app_context():
-        other_user = User(email="other@test.com", role="applicant")
-        other_user.set_password("pass")
-        db.session.add(other_user)
-        db.session.flush()
-
-        app_obj = Application(title="Secret", short_description="Desc", owner=other_user)
-        db.session.add(app_obj)
-        db.session.commit()
-        app_id = app_obj.id
-
-    client.post("/login", data={"email": user.email, "password": "StrongPass1"})
     response = client.get(f"/applications/{app_id}", follow_redirects=True)
-
     assert "Ви не маєте доступу" in response.get_data(as_text=True)

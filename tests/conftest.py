@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-import tempfile
 import pytest
 
 # Додаємо кореневу папку проєкту в шляхи пошуку Python
@@ -15,26 +14,22 @@ from models import User
 
 
 @pytest.fixture
-def app():
+def app(tmp_path):
     """Створює екземпляр застосунку з тестовою конфігурацією."""
-    # Створюємо тимчасову директорію для файлів
-    test_upload_folder = tempfile.mkdtemp()
+    flask_app.config["TESTING"] = True
+    flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    flask_app.config["WTF_CSRF_ENABLED"] = False  # Вимикаємо CSRF для тестів
 
-    flask_app.config.update({
-        "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-        "WTF_CSRF_ENABLED": False,  # Вимикаємо CSRF для тестів
-        "UPLOAD_FOLDER": test_upload_folder
-    })
+    # Налаштування тимчасової папки для завантажень
+    upload_folder = tmp_path / "uploads"
+    upload_folder.mkdir()
+    flask_app.config['UPLOAD_FOLDER'] = str(upload_folder)
 
     with flask_app.app_context():
         db.create_all()
         yield flask_app
         db.session.remove()
         db.drop_all()
-
-    # Видаляємо тимчасову папку після тестів
-    shutil.rmtree(test_upload_folder)
 
 
 @pytest.fixture
@@ -43,25 +38,10 @@ def client(app):
 
 
 @pytest.fixture
-def runner(app):
-    return app.test_cli_runner()
-
-
-@pytest.fixture
 def user(app):
     """Створює звичайного користувача."""
-    u = User(email="user@test.com", role="applicant")
+    u = User(email="user@example.com", role="applicant")
     u.set_password("StrongPass1")
-    db.session.add(u)
-    db.session.commit()
-    return u
-
-
-@pytest.fixture
-def expert(app):
-    """Створює експерта."""
-    u = User(email="expert@test.com", role="expert")
-    u.set_password("ExpertPass1")
     db.session.add(u)
     db.session.commit()
     return u
@@ -71,7 +51,17 @@ def expert(app):
 def admin(app):
     """Створює адміна."""
     u = User(email="admin@test.com", role="admin")
-    u.set_password("AdminPass1")
+    u.set_password("admin123")
+    db.session.add(u)
+    db.session.commit()
+    return u
+
+
+@pytest.fixture
+def expert(app):
+    """Створює експерта."""
+    u = User(email="expert@test.com", role="expert")
+    u.set_password("expert123")
     db.session.add(u)
     db.session.commit()
     return u
