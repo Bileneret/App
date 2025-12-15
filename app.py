@@ -1,3 +1,5 @@
+# ssh -R 80:127.0.0.1:5000 nokey@localhost.run
+
 import os
 from flask import Flask, g, render_template, flash, redirect, url_for
 from extensions import db, mail
