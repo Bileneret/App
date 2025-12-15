@@ -124,4 +124,4 @@ if __name__ == "__main__":
     from models import User, PasswordResetToken, Application
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
